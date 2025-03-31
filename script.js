@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 엔터 키 누를 때도 전송되도록
   document.getElementById("message").addEventListener("keypress", function (e) {
     if (e.key === "Enter") {
+      e.preventDefault();
       sendMessage();
     }
   });
