@@ -1,19 +1,17 @@
-run = "npm run dev"
 modules = ["nodejs-20"]
-hidden = [".config", "package-lock.json"]
-entrypoint = "index.html"
 
-[nix]
-channel = "stable-24_05"
+[workflows]
+runButton = "Run Dev Server"
 
-[unitTest]
-language = "nodejs"
+[[workflows.workflow]]
+name = "Run Dev Server"
+author = 40278075
+mode = "sequential"
 
-[deployment]
-deploymentTarget = "static"
-build = ["npm", "run", "build"]
-publicDir = "dist"
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
 
-[[ports]]
-localPort = 5173
-externalPort = 80
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
