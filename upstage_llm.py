@@ -1,31 +1,41 @@
-import requests
-import fitz  # PyMuPDF
-from io import BytesIO
+import openai  # openai==1.52.2
 
+class Chatbot:
+    def __init__(self):
+        self.client = OpenAI(
+            api_key="up_iIFJ3o3pGBZt5KOdlSj2SCDnGizup",
+            base_url="https://api.upstage.ai/v1"
+        )
+        self.chat_history = [
+            {"role": "system", "content": "You are a compassionate and professional psychological counselor. You provide empathetic, thoughtful, and non-judgmental responses to users who seek mental health support. Always encourage self-reflection and positive thinking, and offer practical coping strategies. If I ask a question in Korean, you must answer in Korean."}
+        ]
 
-def upstage_document_pasring(filename):
-    UPSTAGE_API_KEY = "up_iIFJ3o3pGBZt5KOdlSj2SCDnGizup"  # ex: up_xxxYYYzzzAAAbbbCCC
-    UPSTAGE_URL = "https://api.upstage.ai/v1/document-digitization"
-    headers = {"Authorization": f"Bearer {UPSTAGE_API_KEY}"}
-    files = {"document": open(filename, "rb")}
-    data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse"}
-    response = requests.post(UPSTAGE_URL, headers=headers, files=files, data=data)
-    # print(response.json())
-    return response.json()
+    def get_chat_response(self, user_message, stream=True):
+        self.chat_history.append({"role": "user", "content": user_message})
 
+        response = openai.ChatCompletion.create(
+            api_key=self.api_key,  # ✅ API 키 직접 전달
+            base_url=self.base_url,  # ✅ base_url 직접 전달
+            model="solar-pro",
+            messages=self.chat_history,
+            stream=stream
+        )
 
-# 웹 pdf를 메모리에 바로 불러와서 읽기
-# PyMuPDF 사용
-def web_pdf_reader(pdf_url)
-    # 1. 웹에서 PDF 받아오기
-    # pdf_url = "https://example.com/sample.pdf"  
-    response = requests.get(pdf_url)
-    
-    # 2. 메모리에서 PDF 열기
-    pdf_data = BytesIO(response.content)
-    doc = fitz.open(stream=pdf_data, filetype="pdf")
-    
-    # 3. 페이지별 텍스트 추출
-    for page in doc:
-        text = page.get_text()
-        print(text)
+        response_text = ""
+        if stream:
+            for chunk in response:
+                if chunk.choices[0].delta.content is not None:
+                    print(chunk.choices[0].delta.content, end="")
+                    response_text += chunk.choices[0].delta.content
+        else:
+            response_text = response.choices[0].message.content
+
+        self.chat_history.append({"role": "assistant", "content": response_text})
+        return response_text
+
+# Example Usage
+if __name__ == "__main__":
+    chatbot = Chatbot()
+    user_input = input("User: ")
+    chat_response = chatbot.get_chat_response(user_input, stream=False)
+    print("\nAI Response:", chat_response)
