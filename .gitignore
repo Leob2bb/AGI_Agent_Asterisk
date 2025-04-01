@@ -15,18 +15,21 @@ pip-wheel-metadata/
 venv/
 .venv/
 env/
-hong2/
-sang/
+ENV/
+env.bak/
+venv.bak/
 */pyvenv.cfg
-
 
 # 테스트 / 커버리지
 htmlcov/
 .coverage
 .tox/
+.nox/
 .pytest_cache/
+.hypothesis/
+cover/
 
-# jupyter
+# Jupyter Notebook
 .ipynb_checkpoints
 
 # IDE / Editor 설정
@@ -36,3 +39,78 @@ htmlcov/
 # 시스템 파일
 .DS_Store
 Thumbs.db
+
+# 배포 관련 파일
+.Python
+develop-eggs/
+downloads/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+.installed.cfg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask
+instance/
+.webassets-cache
+
+# Scrapy
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pipenv & poetry
+Pipfile.lock
+poetry.lock
+pdm.lock
+.pdm.toml
+
+# Environments
+.env
+
+# Spyder & Rope
+.spyderproject
+.spyproject
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy & static type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
