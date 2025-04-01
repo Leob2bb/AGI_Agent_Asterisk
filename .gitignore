@@ -1,0 +1,37 @@
+# 🐍 Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+*.log
+
+# Python 가상환경들
+venv/
+.venv/
+env/
+hong2/
+*/pyvenv.cfg
+
+
+# 테스트 / 커버리지
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+
+# jupyter
+.ipynb_checkpoints
+
+# IDE / Editor 설정
+.vscode/
+.idea/
+
+# 시스템 파일
+.DS_Store
+Thumbs.db
