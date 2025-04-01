@@ -1,30 +1,28 @@
-from flask import Flask, jsonify, request
+from flask import Flask, json, jsonify, request
 from flask_cors import CORS
 import uuid
 import os
+from datetime import datetime
 # import json
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-
-# 임시 저장소 (실제 서비스에서는 데이터베이스를 사용해야 함)
-# dreams_db = {}
-# analysis_db = {}
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
 
 # SQLite 데이터베이스 설정
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'  # db 파일 생성
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dreams.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+
 # User 모델 정의
 class User(db.Model):
-    __tablename__ = 'users'  # ← 복수형으로 지정
-    
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
@@ -34,21 +32,46 @@ class User(db.Model):
         self.password = password
 
 
+# Dream 모델 정의
+class Dream(db.Model):
+    __tablename__ = 'dreams'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(50), nullable=False)
+    title = db.Column(db.String(255))
+    date = db.Column(db.String(50))
+    content = db.Column(db.Text)
+    file_path = db.Column(db.String(512), nullable=True)  # 텍스트 입력이면 None
+    type = db.Column(db.String(10))  # 'text' or 'file'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, user_id, title, date, content, type, file_path=None):
+        self.user_id = user_id
+        self.title = title
+        self.content = content
+        self.date = date
+        self.type = type
+        self.file_path = file_path
+
+
 # 파일 업로드를 위한 임시 디렉토리 생성
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-    
+
+
 @app.route('/')
 def home():
     return "Bot is online"
 
+
 @app.route('/register', methods=['POST'])
 def register():
-    data = request.json
+    data = request.get_json()
     if not data:
         return jsonify({'error': 'No data received'}), 400
-        
+    print("requests data: ", data)
+    # print("requests header: ", str(request.headers))
+
     username = data.get('username')
     password = data.get('password')
     if not username or not password:
@@ -66,69 +89,136 @@ def register():
 
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.json
+    data = request.get_json()
     if not data:
         return jsonify({'error': 'No data received'}), 400
+    print("requests data: ", data)
+    # print("requests header: ", str(request.headers))
+
     username = data.get('username')
     password = data.get('password')
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
-        
+
     user = User.query.filter_by(username=username).first()
     if user and bcrypt.check_password_hash(user.password, password):
-        return jsonify({
-            'message': 'Login successful',
-            'userId': user.id,
-            'username': user.username
-        }), 200
+        return jsonify({'id': user.id, 'username': user.username}), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
 
-# @app.route('/dreams/text', methods=['POST'])
-# def submit_dreams_text():
-#     # POST 요청으로 전송된 데이터 접근
-#     data = request.json
-#     print(data)
 
-#     # 고유 ID 생성
-#     dream_id = str(uuid.uuid4())    
+@app.route('/user/<string:user_id>/dream', methods=['POST'])
+def submit_dream_text(user_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data received'}), 400
+    print("requests data: ", data)
+    # print("requests header: ", str(request.headers))
 
-#     # 데이터 저장
-#     if data is not None:
-#         dreams_db[dream_id] = {
-#             'title': data.get('title'),
-#             'date': data.get('date'),
-#             'content': data.get('content'),
-#             'type': 'text'
-#         }
-#     else:
-#         return jsonify({'error': 'No data received'}), 400
-    
-#     # 데이터 처리...
-#     return jsonify({"success": True, "received": data})
+    title = data.get('title')
+    date = data.get('date')
+    content = data.get('content')
+
+    if not title or not content or not date:
+        return jsonify({'error': 'Title, date and content are required'}), 400
+
+    dream = Dream(user_id=user_id,
+                  title=title,
+                  date=date,
+                  content=content,
+                  type='text')
+
+    db.session.add(dream)
+    db.session.commit()
+
+    return jsonify({
+        'id': dream.id,
+        'title': dream.title,
+        'date': dream.date,
+        'content': dream.content
+    }), 201
 
 
-# @app.route('/dreams/file', methods=['POST'])
-# def register_dream_file():
-#     # 파일 업로드를 위한 꿈 정보 등록
-#     data = request.json
+@app.route('/user/<string:user_id>/dream/file', methods=['POST'])
+def submit_dream_file(user_id):
+    # data = request.get_json()()
+    # if not data:
+    #     return jsonify({'error': 'No data received'}), 400
+    # print("requests data: ", data)
+    # print("requests header: ", str(request.headers))
 
-#     # 고유 ID 생성
-#     dream_id = str(uuid.uuid4())
+    # title = data.get('title')
+    # date = data.get('date')
+    # content = data.get('content')
 
-#     # 데이터 저장
-#     dreams_db[dream_id] = {
-#         'title': data.get('title'),
-#         'date': data.get('date'),
-#         'content': None,  # 파일 업로드 후 내용이 채워질 예정
-#         'type': 'file',
-#         'file_path': None  # 파일 업로드 후 경로가 채워질 예정
-#     }
+    title = request.form.get('title')  # 일반 텍스트 데이터
+    date = request.form.get('date')
+    content = request.form.get('content')
+    file = request.files.get('file')
+    print("title: ", title, "date: ", date, "content: ", content)
+    print("Request files: ", request.files)
 
-#     return jsonify({"success": True, "id": dream_id})
+    if not title or not date or not file:
+        return jsonify({'error': 'Title, date, and file are required'}), 400
+    # if not content:
+    #     return jsonify({'error': 'Content is required'}), 400
+
+    # if 'file' not in request.files:
+    #     return jsonify({'error': 'No file uploaded'}), 400
+
+    if file.filename is not None:
+        filename = secure_filename(file.filename)
+        save_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(save_path)
+    else:
+        return jsonify({'error': 'Empty filename'}), 400
+
+    # 텍스트 파일이면 내용 읽기
+    # 이거 프론트엔드에서 처리하고 넘어옴
+    # content = None
+    # if file.filename.endswith('.txt'):
+    #     try:
+    #         with open(save_path, 'r', encoding='utf-8') as f:
+    #             content = f.read()
+    #     except:
+    #         pass  # 오류 시 content는 None 유지
+
+    # ** 해야 하는 일: PDF 내용 추출해서 content 필드에 저장
+
+    dream = Dream(user_id=user_id,
+                  title=filename,
+                  date=date,
+                  content=content,
+                  file_path=save_path,
+                  type='file')
+
+    db.session.add(dream)
+    db.session.commit()
+
+    return jsonify({
+        'id': dream.id,
+        'title': dream.title,
+        'date': dream.date,
+        'content': dream.content,
+        'file_path': dream.file_path
+    }), 201
+
+
+@app.route('/user/<string:user_id>/dreams', methods=['GET'])
+def get_dreams(user_id):
+    dreams = Dream.query.filter_by(user_id=user_id).order_by(
+        Dream.created_at.desc()).all()
+    results = [{
+        'id': d.id,
+        'title': d.title,
+        'type': d.type,
+        'created_at': d.created_at.isoformat()
+    } for d in dreams]
+
+    return jsonify({'dreams': results})
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
     with app.app_context():
-        db.create_all()  # 테이블이 없으면 새로 생성됨
+        db.create_all()  # 테이블 없으면 생성
+    app.run(host='0.0.0.0', port=8080)
