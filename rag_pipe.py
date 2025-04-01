@@ -14,9 +14,16 @@ load_dotenv()
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 assert UPSTAGE_API_KEY, "❌ .env에 UPSTAGE_API_KEY가 필요합니다."
 
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
+qdrant_client = QdrantClient(
+    url=QDRANT_URL,
+    api_key=QDRANT_API_KEY,
+)
 # 2. Qdrant 벡터DB 연결
 qdrant = QdrantVectorStore(
-    client=QdrantClient(host="localhost", port=6333),
+    client=qdrant_client,
     collection_name="dream-papers",
     embedding=UpstageEmbeddings(api_key=UPSTAGE_API_KEY, model="embedding-passage")
 )
@@ -39,13 +46,13 @@ prompt_template = PromptTemplate.from_template("""
 # 6. RAG 체인 구성
 rag_chain = RetrievalQA.from_chain_type(
     llm=llm,
-    retriever=qdrant.as_retriever(search_kwargs={"k": 3}),
+    retriever=qdrant.as_retriever(search_kwargs={"k": 100}),
     chain_type="stuff",
     chain_type_kwargs={"prompt": prompt_template}
 )
 
 # 7. 사용자 꿈 데이터에 대해 응답 생성
-for i, dream in enumerate(dreams[:3]):  # 테스트용으로 3개만 처리
+for i, dream in enumerate(dreams):
     query = dream["content"]
     print(f"\n🔍 [사용자 질문 {i+1}]: {dream['title']}")
     print("🧠 RAG 응답:")
