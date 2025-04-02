@@ -93,9 +93,6 @@ def process_pdfs(pdf_dir, user_id, title, chunk_size=1000, chunk_overlap=50):
     vectorstore.add_documents(all_chunks)
 
     print(f"Qdrant 업로드 완료! 컬렉션: {collection_name}")
-    
-    # if {업로드 완료}
-    process_qdrant_document(user_id, title)
 
     return "\n".join([chunk.page_content for chunk in all_chunks])
 
