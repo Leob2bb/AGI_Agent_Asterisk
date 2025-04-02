@@ -1,13 +1,37 @@
 from flask import Flask, json, jsonify, request
 from flask_cors import CORS
 import uuid
-import os
 from datetime import datetime
 # import json
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
+
+import os
+import fitz  # PyMuPDF
+from dotenv import load_dotenv
+
+from langchain.schema import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_upstage.embeddings import UpstageEmbeddings
+from langchain_qdrant import QdrantVectorStore
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+
+# batch_parse.py 참조
+from batch_parse import process_pdfs
+
+# 환경 변수 로드 (.env에 키들 있어야 함)
+load_dotenv()
+
+UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+COLLECTION_NAME = "dream-papers"
+
+assert UPSTAGE_API_KEY, ".env에 UPSTAGE_API_KEY가 필요합니다."
+assert QDRANT_URL and QDRANT_API_KEY, "Qdrant 설정이 누락되었습니다."
 
 app = Flask(__name__)
 CORS(app)
@@ -19,6 +43,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+# 최대 파일 크기 제한 10MB
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+# print("max_length = ", app.config.get("MAX_CONTENT_LENGTH"))
 
 # User 모델 정의
 class User(db.Model):
@@ -61,6 +88,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 @app.route('/')
 def home():
+    print(request.headers) 
     return "Bot is online"
 
 
@@ -170,6 +198,11 @@ def submit_dream_file(user_id):
         filename = secure_filename(file.filename)
         save_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(save_path)
+
+        file_ext = os.path.splitext(filename)[1].lower()
+        # 확장자가 .pdf일 경우만 실행
+        if file_ext == '.pdf':
+            content = process_pdfs(UPLOAD_FOLDER)
     else:
         return jsonify({'error': 'Empty filename'}), 400
 
