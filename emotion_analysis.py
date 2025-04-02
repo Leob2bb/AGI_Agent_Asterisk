@@ -154,6 +154,7 @@ def process_qdrant_document(user_id: str, title: str):
 
     qdrant_client.upsert(collection_name=target_collection, points=[point])
     print(f"📌 '{target_collection}'에 감정 분석 결과 업로드 완료!")
+    return emotions
 
 
 # ========== 예시 실행 ==========

@@ -24,6 +24,10 @@ from dotenv import load_dotenv
 
 # batch_parse.py 참조
 from batch_parse import process_pdfs
+# 감정 분석 AGENT 클래스 참조
+from agent.emotion_agent import EmotionAgent
+# emotion_analysis.py 참조조
+from emotion_analysis import process_qdrant_document
 
 # 환경 변수 로드 (.env에 키들 있어야 함)
 load_dotenv()
@@ -75,14 +79,18 @@ class Dream(db.Model):
     file_path = db.Column(db.String(512), nullable=True)  # 텍스트 입력이면 None
     type = db.Column(db.String(10))  # 'text' or 'file'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # 감정 분석 결과 넣어버리기
+    emotions = db.Column(db.Text) # json 형태태
+    # 행동 분석 결과 넣어버리기
 
-    def __init__(self, user_id, title, date, content, type, file_path=None):
+    def __init__(self, user_id, title, date, content, type, emotions, file_path=None):
         self.user_id = user_id
         self.title = title
         self.content = content
         self.date = date
         self.type = type
         self.file_path = file_path
+        self.emotions = emotions
 
 
 # 파일 업로드를 위한 임시 디렉토리 생성
@@ -114,6 +122,7 @@ def register():
         return jsonify({'error': 'Username already exists'}), 409
 
     hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
+    
     user = User(username=username, password=hashed_pw)
     db.session.add(user)
     db.session.commit()
@@ -155,15 +164,19 @@ def submit_dream_text(user_id):
     if not title or not content or not date:
         return jsonify({'error': 'Title, date and content are required'}), 400
 
+    emotions = ""   # 임시
+
     dream = Dream(user_id=user_id,
                   title=title,
                   date=date,
                   content=content,
+                  emotions=emotions,
                   type='text')
 
     db.session.add(dream)
     db.session.commit()
 
+    # emotions 반영해야 함
     return jsonify({
         'id': dream.id,
         'title': dream.title,
@@ -197,34 +210,26 @@ def submit_dream_file(user_id):
         file_ext = os.path.splitext(filename)[1].lower()
         # 확장자가 .pdf일 경우만 실행
         if file_ext == '.pdf':
-            # batch_parse.py의 함수 실행행
+            # batch_parse.py의 함수 실행
             content = process_pdfs(UPLOAD_FOLDER, user_id, title)
+            # emotion_analysis.py의 함수 실행
+            emotions = process_qdrant_document(user_id, title)
 
     else:
         return jsonify({'error': 'Empty filename'}), 400
-
-    # 텍스트 파일이면 내용 읽기
-    # 이거 프론트엔드에서 처리하고 넘어옴
-    # content = None
-    # if file.filename.endswith('.txt'):
-    #     try:
-    #         with open(save_path, 'r', encoding='utf-8') as f:
-    #             content = f.read()
-    #     except:
-    #         pass  # 오류 시 content는 None 유지
-
-    # ** 해야 하는 일: PDF 내용 추출해서 content 필드에 저장
 
     dream = Dream(user_id=user_id,
                   title=filename,
                   date=date,
                   content=content,
                   file_path=save_path,
+                  emotions = emotions,
                   type='file')
 
     db.session.add(dream)
     db.session.commit()
 
+    # emotions 반영해야 함
     return jsonify({
         'id': dream.id,
         'title': dream.title,
@@ -247,6 +252,31 @@ def get_dreams(user_id):
 
     return jsonify({'dreams': results})
 
+
+@app.route('/user/<string:user_id>/dream/<dream_id>/analysis', methods=['GET'])
+def get_dream_analysis(user_id, dream_id, content, emotions):
+    # 예시 코드, 실제로는 분석 결과가 반환
+    if emotions is not None:
+        agent = EmotionAgent(emotions)
+        prompt = agent.create_llm_prompt(content)
+        # 예외 처리 필요
+        analysis_result = agent.call_solar_llm(prompt)
+    print("analysis_result = ", jsonify(analysis_result))
+    return jsonify(analysis_result)
+
+
+@app.route('/user/<user_id>/dream/<dream_id>/chat', methods=['POST'])
+def process_chat_message(user_id, dream_id):
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({"error": "메시지가 제공되지 않았습니다"}), 400
+    
+    user_message = data['message']
+    # ai 답변 구현
+    ai_response = {
+        "response": f"당신의 메시지 '{user_message}'에 대한 응답입니다. 꿈에 관한 추가 질문이 있으신가요?"
+    }
+    return jsonify(ai_response)
 
 if __name__ == '__main__':
     with app.app_context():

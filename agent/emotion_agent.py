@@ -71,7 +71,7 @@ class EmotionAgent:
 
     def call_solar_llm(self, prompt):
         try:
-            api_key = os.getenv("SOLAR_API_KEY")
+            api_key = os.getenv("UPSTAGE_API_KEY")
             url = "https://api.upstage.ai/v1/chat/completions"
 
             headers = {
