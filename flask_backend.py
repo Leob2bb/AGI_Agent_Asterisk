@@ -214,6 +214,8 @@ def submit_dream_file(user_id):
             content = process_pdfs(UPLOAD_FOLDER, user_id, title)
             # emotion_analysis.py의 함수 실행
             emotions = process_qdrant_document(user_id, title)
+            # 디버깅
+            print(emotions)
 
     else:
         return jsonify({'error': 'Empty filename'}), 400
