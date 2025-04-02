@@ -1,0 +1,25 @@
+[
+    {
+      "title": "시험에 떨어지는 꿈",
+      "content": "시험을 망쳐서 너무 슬프고 불안한 느낌이었다. 눈앞이 캄캄해졌다.",
+      "emotions": [
+        { "label": "sadness", "score": 0.87 },
+        { "label": "fear", "score": 0.75 },
+        { "label": "confusion", "score": 0.62 },
+        { "label": "anger", "score": 0.43 },
+        { "label": "caring", "score": 0.21 }
+      ]
+    },
+    {
+      "title": "좋은 소식을 듣는 꿈",
+      "content": "누군가 나에게 좋은 소식을 전해주고 모두가 나를 축하해줬다.",
+      "emotions": [
+        { "label": "joy", "score": 0.92 },
+        { "label": "admiration", "score": 0.74 },
+        { "label": "gratitude", "score": 0.65 },
+        { "label": "amusement", "score": 0.41 },
+        { "label": "neutral", "score": 0.23 }
+      ]
+    }
+  ]
+  
