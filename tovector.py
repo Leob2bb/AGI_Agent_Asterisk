@@ -11,7 +11,7 @@ EMBEDDING_URL = 'https://api.upstage.ai/v1/solar/embeddings'
 
 def get_embedding(text):
     payload = {
-        "model": "solar-1-mini-embedding",
+        "model": "embedding-passage",
         "input": text
     }
     response = requests.post(EMBEDDING_URL, headers=HEADERS, json=payload)
