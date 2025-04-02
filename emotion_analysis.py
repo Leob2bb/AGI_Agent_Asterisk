@@ -48,7 +48,7 @@ def analyze_emotions(text, threshold=0.3):
     return sorted(results, key=lambda x: x["score"], reverse=True)
 
 # ===== 텍스트 청크 분할 =====
-def split_text_into_chunks(text, max_tokens=4000):
+def split_text_into_chunks(text, max_tokens=1000):
     approx_chunk_size = max_tokens * 4  # 영어 기준 1 token ≈ 4 chars
     return [text[i:i+approx_chunk_size] for i in range(0, len(text), approx_chunk_size)]
 
@@ -65,7 +65,7 @@ def get_embedding(text):
         }
         payload = {
             "model": "embedding-passage",
-            "input": text
+            "input": chunk
         }
         response = requests.post(url, headers=headers, json=payload)
 

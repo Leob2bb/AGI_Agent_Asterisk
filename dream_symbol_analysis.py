@@ -1,4 +1,3 @@
-
 import os
 import requests
 from dotenv import load_dotenv
@@ -42,7 +41,6 @@ symbol_dict = {
     "죽은 사람": "미련, 회한, 과거와의 연결"
 }
 
-# 상징 추출 (symbol_dict 기반)
 def extract_symbols(text):
     return [
         {"object": keyword, "meaning": meaning}
@@ -50,7 +48,6 @@ def extract_symbols(text):
         if keyword in text
     ]
 
-# LLM를 이용한 의도 해석
 def llm_intention_supplement(text):
     url = "https://api.upstage.ai/v1/solar/chat/completions"
     headers = {
@@ -58,26 +55,29 @@ def llm_intention_supplement(text):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "solar-pro-1-chat",
+        "model": "solar-pro",
+        "top_p": 1,
+        "temperature": 0.7,
         "messages": [
             {
                 "role": "system",
-                "content": "당신은 꿈 해석 전문가입니다. 사용자의 꿈 내용을 바탕으로 꿈 속 행동이나 상황이 나타내는 심리적 의도 또는 무의식을 추론해주세요."
+                "content": "당신은 꿈 해석 전문가이며, 무의식, 감정 상태, 내면의 심리를 추론하는 역할을 합니다."
             },
             {
                 "role": "user",
                 "content": f"""
-다음은 꿈 내용입니다. 이 꿈에서 사용자의 **의도**, **심리적 상태**, **무의식의 목적**을 해석해주세요.
+다음 꿈의 내용에서 사용자의 무의식적 의도, 감정 상태, 심리적 동기를 분석해주세요.
 
-{text}
-
-결과는 한국어로 JSON 배열 형태로 반환해주세요.
-예시:
+반드시 JSON 배열 형태로 분석 결과를 반환해주세요.
+형식 예시:
 [
-  "심리적 불안정과 통제력 상실",
-  "외부 자극 회피",
-  "감정 해소 욕구"
+  "불안정한 감정 상태에서 도망치고자 하는 심리",
+  "무의식적인 감정 정화 욕구",
+  "자기 통제력 상실에 대한 불안"
 ]
+
+꿈 내용:
+{text}
 """
             }
         ]
@@ -87,14 +87,25 @@ def llm_intention_supplement(text):
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             gpt_response = response.json()['choices'][0]['message']['content']
-            return json.loads(gpt_response)
+            print("[GPT DEBUG 응답]", gpt_response)
+            parsed = json.loads(gpt_response)
+
+            if isinstance(parsed, dict):
+                merged = []
+                for v in parsed.values():
+                    if isinstance(v, list):
+                        merged.extend(v)
+                    elif isinstance(v, str):
+                        merged.append(v)
+                return merged
+            elif isinstance(parsed, list):
+                return parsed
         else:
             print(f"[GPT ERROR] {response.status_code} - {response.text}")
     except Exception as e:
         print(f"[GPT PARSE ERROR] {e}")
     return ["명확한 의도 분석 불가"]
 
-# LLM 기반 상징 해석 (보완용)
 def llm_symbolic_supplement(text):
     url = "https://api.upstage.ai/v1/solar/chat/completions"
     headers = {
@@ -102,25 +113,28 @@ def llm_symbolic_supplement(text):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "solar-pro-1-chat",
+        "model": "solar-pro",
+        "top_p": 1,
+        "temperature": 0.7,
         "messages": [
             {
                 "role": "system",
-                "content": "당신은 꿈 해석 전문가입니다. 꿈 내용을 심리학적으로 상징 분석 해주세요."
+                "content": "당신은 꿈 분석 전문가이며, 상징과 심리적 의미를 구조화된 JSON 형식으로 분석하는 역할을 합니다."
             },
             {
                 "role": "user",
                 "content": f"""
-다음 꿈 내용에서 상징적인 사물, 행동, 인물 등을 찾아 심리적 의미로 해석해주세요.
+다음 꿈 내용에서 등장하는 사물, 인물, 행동, 장소 등을 분석하여
+각 요소가 나타내는 심리적/무의식적 의미를 해석해주세요.
 
-{text}
-
-반드시 JSON 배열 형태로 반환해주세요.
-예시:
+반드시 아래와 같은 JSON 배열 형식으로 반환해주세요.
 [
-  {{ "object": "물", "meaning": "감정, 무의식" }},
-  {{ "object": "절벽", "meaning": "위기의 순간, 중요한 선택" }}
+  {{ "object": "물", "meaning": "감정, 무의식과 관련된 상징" }},
+  {{ "object": "불", "meaning": "감정 폭발, 정화 또는 파괴의 의미" }}
 ]
+
+꿈 내용:
+{text}
 """
             }
         ]
@@ -130,27 +144,37 @@ def llm_symbolic_supplement(text):
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             gpt_response = response.json()['choices'][0]['message']['content']
-            return json.loads(gpt_response)
+            print("[GPT DEBUG 응답]", gpt_response)
+            parsed = json.loads(gpt_response)
+
+            if isinstance(parsed, dict):
+                for val in parsed.values():
+                    if isinstance(val, list) and all(isinstance(item, dict) and ("object" in item or "action" in item) for item in val):
+                        parsed = val
+                        break
+
+            if isinstance(parsed, list) and all(isinstance(item, dict) and ("object" in item or "action" in item) for item in parsed):
+                return parsed
+            else:
+                print("[WARNING] GPT 응답 형식이 예상과 다름. 생략 처리.")
+                return []
         else:
             print(f"[GPT ERROR] {response.status_code} - {response.text}")
     except Exception as e:
         print(f"[GPT PARSE ERROR] {e}")
     return []
 
-# 메인 함수
 def analyze_symbols_and_intentions(text):
     symbols = extract_symbols(text)
 
-    # 상징이 너무 적을 때만 llm으으로 보완
     if len(symbols) < 2:
         print("🤖 GPT 상징 해석 보완 수행")
         gpt_symbols = llm_symbolic_supplement(text)
-        existing = {s['object'] for s in symbols}
-        symbols += [s for s in gpt_symbols if s['object'] not in existing]
+        existing = {s['object'] for s in symbols if "object" in s}
+        symbols += [s for s in gpt_symbols if s.get("object") not in existing]
     else:
         print("✅ 규칙 기반 상징 해석으로 충분")
 
-    # 의도는 항상 GPT로 수행
     intentions = llm_intention_supplement(text)
 
     return {
