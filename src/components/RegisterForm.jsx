@@ -20,35 +20,30 @@ function RegisterForm({ setCurrentUser }) {
     }));
   };
 
+  // src/components/RegisterForm.jsx의 handleSubmit 함수 수정
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     // 필드 검증
     if (!formData.username || !formData.password) {
       setError('아이디와 비밀번호를 모두 입력해주세요.');
       return;
     }
-
     // 비밀번호 확인
     if (formData.password !== formData.confirmPassword) {
       setError('비밀번호가 일치하지 않습니다.');
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
-      const result = await authService.register(formData.username, formData.password);
+      await authService.register(formData.username, formData.password);
+      // 자동 로그인 부분 제거
 
-      // 회원가입 성공 후 자동 로그인 처리
-      const loginResult = await authService.login(formData.username, formData.password);
-      localStorage.setItem('user', JSON.stringify(loginResult));
-      setCurrentUser(loginResult);
+      // 성공 메시지 표시
+      alert('회원가입이 성공적으로 완료되었습니다. 로그인해주세요.');
 
-      // 홈페이지로 리다이렉션
-      navigate(`/user/${loginResult.username}`);
-
+      // 로그인 페이지로 리다이렉션
+      navigate('/login');
     } catch (err) {
       // 백엔드 오류 코드에 따른 메시지 설정
       if (err.status === 400) {

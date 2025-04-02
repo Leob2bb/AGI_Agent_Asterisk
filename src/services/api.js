@@ -1,54 +1,56 @@
 // src/services/api.js
-const API_BASE_URL = "https://bf7c9bc2-2560-4704-a3a0-f9c4d3a9c78a-00-7ew1tl3q0m4b.sisko.replit.dev";
-  // src/services/api.js의 authService 부분만 수정
-  export const authService = {
-    // 로그인
-    login: async (username, password) => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ username, password })
-        });
-        if (!response.ok) {
-          const error = new Error('Login failed');
-          error.status = response.status;
-          throw error;
-        }
-        return await response.json();
-      } catch (error) {
-        console.error('Auth API Error:', error);
+const API_BASE_URL = "https://agi-agent-asterisk-render.onrender.com";
+
+export const authService = {
+  // 로그인
+  login: async (username, password) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+      if (!response.ok) {
+        const error = new Error('Login failed');
+        error.status = response.status;
         throw error;
       }
-    },
-    // 회원가입
-    register: async (username, password) => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ username, password })
-        });
-        if (!response.ok) {
-          const error = new Error('Registration failed');
-          error.status = response.status;
-          throw error;
-        }
-        return await response.json();
-      } catch (error) {
-        console.error('Auth API Error:', error);
+      return await response.json();
+    } catch (error) {
+      console.error('Auth API Error:', error);
+      throw error;
+    }
+  },
+
+  // 회원가입
+  register: async (username, password) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+      if (!response.ok) {
+        const error = new Error('Registration failed');
+        error.status = response.status;
         throw error;
       }
-    },
-    // 나머지 함수들은 그대로...
+      return await response.json();
+    } catch (error) {
+      console.error('Auth API Error:', error);
+      throw error;
+    }
+  },
+
   // 로그아웃
   logout: () => {
     localStorage.removeItem('user');
   },
+
   // 현재 로그인한 사용자 가져오기
   getCurrentUser: () => {
     const userStr = localStorage.getItem('user');
@@ -60,6 +62,7 @@ const API_BASE_URL = "https://bf7c9bc2-2560-4704-a3a0-f9c4d3a9c78a-00-7ew1tl3q0m
     }
   }
 };
+
 export const dreamService = {
   // 직접 입력한 꿈 내용 제출
   submitDreamText: async (dreamData, userId) => {
@@ -67,7 +70,8 @@ export const dreamService = {
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dream`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(dreamData)
       });
@@ -80,8 +84,8 @@ export const dreamService = {
       throw error;
     }
   },
+
   // 파일 업로드로 꿈 내용 제출
-  // src/services/api.js의 submitDreamFile 함수 수정
   submitDreamFile: async (dreamData, file, userId) => {
     try {
       // FormData 객체만 생성하고 파일 내용 읽기 시도하지 않음
@@ -92,6 +96,9 @@ export const dreamService = {
 
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/file`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: formData
       });
 
@@ -101,17 +108,23 @@ export const dreamService = {
         error.status = response.status;
         throw error;
       }
-
       return await response.json();
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
   },
+
   // 사용자의 꿈 기록 가져오기
   getDreamHistory: async (userId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dreams`);
+      const response = await fetch(`${API_BASE_URL}/user/${userId}/dreams`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to get dream history');
       }
@@ -121,15 +134,61 @@ export const dreamService = {
       throw error;
     }
   },
-  // 특정 꿈 정보 가져오기 (추가된 함수)
+
+  // 특정 꿈 정보 가져오기
   getDream: async (userId, dreamId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/${dreamId}`);
-
+      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/${dreamId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to get dream');
       }
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  },
 
+  // 초기 분석 결과 가져오기
+  getDreamAnalysis: async (userId, dreamId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/${dreamId}/analysis`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to get dream analysis');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  },
+
+  // 채팅 메시지 전송 및 응답 받기
+  sendChatMessage: async (userId, dreamId, message) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/${dreamId}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ message })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to get chat response');
+      }
       return await response.json();
     } catch (error) {
       console.error('API Error:', error);

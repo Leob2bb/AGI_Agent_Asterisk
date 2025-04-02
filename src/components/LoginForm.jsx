@@ -43,6 +43,14 @@ function LoginForm({ setCurrentUser }) {
 
     } catch (err) {
       // 오류 처리 코드...
+      if (err.status === 401) {
+        setError('아이디 또는 비밀번호가 일치하지 않습니다.');
+      } else if (err.status === 404) {
+        setError('존재하지 않는 사용자입니다.');
+      } else {
+        setError('로그인에 실패했습니다. 다시 시도해주세요.');
+      }
+      console.error(err);
     } finally {
       setLoading(false);
     }

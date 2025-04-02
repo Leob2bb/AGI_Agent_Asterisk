@@ -1,15 +1,15 @@
-// src/components/DreamChatAnalysis.jsx
 import React, { useState, useEffect, useRef } from 'react';
 
-function DreamChatAnalysis({ dreamId, userId }) {
+function DreamChatAnalysis({ dreamId, userId, initialDream }) {
   const [messages, setMessages] = useState([]);
+  const [analysis, setAnalysis] = useState(null);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // 초기 메시지 설정
+  // 초기 분석 데이터 가져오기
   useEffect(() => {
-    const fetchInitialAnalysis = async () => {
+    const fetchAnalysis = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/user/${userId}/dream/${dreamId}/analysis`, {
           method: 'GET',
@@ -20,30 +20,33 @@ function DreamChatAnalysis({ dreamId, userId }) {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to get initial analysis');
+          throw new Error('Failed to get analysis');
         }
 
         const data = await response.json();
+        setAnalysis(data);
+
+        // 초기 메시지로 요약된 분석 내용 추가
         setMessages([
           {
             type: 'analysis',
-            content: data.initialAnalysis,
+            content: data.interpretation || data.initialAnalysis,
             timestamp: new Date()
           }
         ]);
       } catch (error) {
-        console.error('Error fetching initial analysis:', error);
+        console.error('Error fetching analysis:', error);
         setMessages([
           {
             type: 'error',
-            content: '초기 분석을 불러오는데 실패했습니다. 다시 시도해주세요.',
+            content: '분석 정보를 불러오는데 실패했습니다. 다시 시도해주세요.',
             timestamp: new Date()
           }
         ]);
       }
     };
 
-    fetchInitialAnalysis();
+    fetchAnalysis();
   }, [userId, dreamId]);
 
   // 자동 스크롤
@@ -98,40 +101,68 @@ function DreamChatAnalysis({ dreamId, userId }) {
   };
 
   return (
-    <div className="dream-chat-container">
-      <div className="chat-messages">
-        {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.type}`}>
-            {msg.type === 'analysis' && (
-              <div className="chat-avatar">AI</div>
-            )}
-            <div className="message-content">{msg.content}</div>
-            <div className="message-time">
-              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    <div className="dream-analysis-container">
+      {/* 감정 태그와 주요 상징 표시 영역 */}
+      {analysis && (
+        <div className="analysis-overview">
+          {analysis.emotions && analysis.emotions.length > 0 && (
+            <div className="emotions-container">
+              <h4>감정 분석</h4>
+              <div className="emotion-tags">
+                {analysis.emotions.map((emotion, index) => (
+                  <span key={index} className="emotion-tag">{emotion}</span>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="message loading">
-            <div className="loading-indicator">
-              <span></span><span></span><span></span>
+          )}
+
+          {analysis.symbols && analysis.symbols.length > 0 && (
+            <div className="symbols-container">
+              <h4>주요 상징</h4>
+              <div className="symbol-tags">
+                {analysis.symbols.map((symbol, index) => (
+                  <span key={index} className="symbol-tag">{symbol.name}</span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
+          )}
+        </div>
+      )}
+
+      {/* 채팅 인터페이스 */}
+      <div className="dream-chat-container">
+        <div className="chat-messages">
+          {messages.map((msg, index) => (
+            <div key={index} className={`message ${msg.type}`}>
+              {msg.type === 'analysis' && (
+                <div className="chat-avatar">AI</div>
+              )}
+              <div className="message-content">{msg.content}</div>
+              <div className="message-time">
+                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="message loading">
+              <div className="loading-indicator">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        <form onSubmit={handleSendMessage} className="chat-input-form">
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="꿈에 대해 더 궁금한 점을 질문해보세요..."
+            disabled={loading}
+          />
+          <button type="submit" disabled={loading || !inputText.trim()}></button>
+        </form>
       </div>
-      <form onSubmit={handleSendMessage} className="chat-input-form">
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="꿈에 대해 더 궁금한 점을 질문해보세요..."
-          disabled={loading}
-        />
-        <button type="submit" disabled={loading || !inputText.trim()}>
-          {/* 화살표 아이콘은 CSS에서 ::after 가상 요소로 처리됨 */}
-        </button>
-      </form>
     </div>
   );
 }

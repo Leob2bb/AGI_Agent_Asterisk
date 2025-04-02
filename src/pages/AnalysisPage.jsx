@@ -47,15 +47,10 @@ function AnalysisPage() {
         <h1>꿈 분석: {dream?.title}</h1>
         <p className="dream-date">{dream?.date}</p>
       </div>
-      <div className="dream-content-container">
-        <h2>꿈 내용</h2>
-        <div className="dream-content">
-          <p>{dream?.content}</p>
-        </div>
-      </div>
+
       <div className="analysis-container">
-        <h2>분석 및 대화</h2>
-        <DreamChatAnalysis dreamId={dreamId} userId={userId} />
+        {/* dream 객체를 통째로 전달하여 DreamChatAnalysis에서 필요한 정보 활용 */}
+        <DreamChatAnalysis dreamId={dreamId} userId={userId} initialDream={dream} />
       </div>
     </div>
   );
