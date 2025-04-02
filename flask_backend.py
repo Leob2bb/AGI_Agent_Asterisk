@@ -71,7 +71,7 @@ class User(db.Model):
 # Dream 모델 정의
 class Dream(db.Model):
     __tablename__ = 'dreams'
-    # dream_id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.String(50), primary_key=True)
     user_id = db.Column(db.String(50), nullable=False)
     title = db.Column(db.String(255))
     date = db.Column(db.String(50))
@@ -85,6 +85,7 @@ class Dream(db.Model):
 
     def __init__(self, user_id, title, date, content, type, emotions, file_path=None):
         # self.dream_id = dream_id
+        self.id = None  # id를 None으로 설정하면 SQLAlchemy가 자동으로 생성
         self.user_id = user_id
         self.title = title
         self.content = content
