@@ -31,9 +31,52 @@ ___
 |기타|	SQLite (로그인 및 사용자 데이터), Kakao i Open Builder (챗봇/의도 분석)|
 
 ___
-## Feature
+```
+dreaminsight/
+├── frontend/               # React 기반 UI
+├── backend/                # Flask API 서버
+│   ├── rag/                # RAG 파이프라인
+│   ├── feedback/           # 피드백 저장 및 버전 관리
+│   ├── embedding/          # PDF 임베딩 파이프라인
+├── data/
+│   └── papers/             # 업로드한 논문 PDF
+├── qdrant/                 # Qdrant 연동 스크립트
+├── README.md
+```
 ___
-## Live Demo
+🧪 주요 기능 흐름도
+
+사용자 꿈 입력 → 2. 감정/주제 분석
+
+→ 3. Qdrant에서 관련 논문 검색
+
+→ 4. RAG 기반 해석 생성
+
+→ 5. 사용자 피드백 수집 및 저장
+
+→ 6. 버전 관리된 결과 제공
 ___
-## Application Screens
+Live Demo
+___
+Application Screens
+
 ![image](https://www.google.co.kr/url?sa=i&url=https%3A%2F%2Fwww.donga.com%2Fnews%2FCulture%2Farticle%2Fall%2F20170125%2F82580811%2F1&psig=AOvVaw3W-4aB2nX3q0brOD6nj4zc&ust=1743690601763000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCICYsOnHuYwDFQAAAAAdAAAAABAE)
+___
+💡 향후 계획 (Roadmap)
+ - GPT와 꿈에 대한 대화형 상담 기능 추가
+
+ - 사용자 맞춤형 해석 템플릿 생성
+
+ - 피드백 기반 해석 자동 개선 기능
+___
+📬 문의
+- 📧 이메일: dreaminsight@yourdomain.com
+
+- 🧑‍💻 팀원 또는 기여자 목록은 CONTRIBUTORS.md 참고
+___
+⭐️ 프로젝트 목표
+
+"심리적 통찰을 통해, 꿈을 더 깊이 이해하다."
+
+DreamInsight는 단순한 해몽을 넘어, 개인화된 심리적 성찰의 도구가 되고자 합니다.
+
