@@ -71,7 +71,7 @@ class User(db.Model):
 # Dream 모델 정의
 class Dream(db.Model):
     __tablename__ = 'dreams'
-    id = db.Column(db.Integer, primary_key=True)
+    # dream_id = db.Column(db.String(50), primary_key=True)
     user_id = db.Column(db.String(50), nullable=False)
     title = db.Column(db.String(255))
     date = db.Column(db.String(50))
@@ -80,10 +80,11 @@ class Dream(db.Model):
     type = db.Column(db.String(10))  # 'text' or 'file'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # 감정 분석 결과 넣어버리기
-    emotions = db.Column(db.Text) # json 형태태
+    emotions = db.Column(db.Text) # json 형태
     # 행동 분석 결과 넣어버리기
 
     def __init__(self, user_id, title, date, content, type, emotions, file_path=None):
+        # self.dream_id = dream_id
         self.user_id = user_id
         self.title = title
         self.content = content
@@ -178,7 +179,6 @@ def submit_dream_text(user_id):
 
     # emotions 반영해야 함
     return jsonify({
-        'id': dream.id,
         'title': dream.title,
         'date': dream.date,
         'content': dream.content
@@ -233,7 +233,6 @@ def submit_dream_file(user_id):
 
     # emotions 반영해야 함
     return jsonify({
-        'id': dream.id,
         'title': dream.title,
         'date': dream.date,
         'content': dream.content,
@@ -241,12 +240,29 @@ def submit_dream_file(user_id):
     }), 201
 
 
+# 특정 사용자의 특정 꿈 정보를 조회하는 API
+@app.route('/user/<string:user_id>/dream/<created_at>', methods=['GET'])
+def get_dream(user_id, created_at):
+
+    dream = Dream.query.filter_by(user_id=user_id, created_at=created_at).first()
+    
+    if dream:
+        return jsonify({
+            'title': dream.title,
+            'date': dream.date,
+            'content': dream.content,
+        }), 200
+    
+    return jsonify({'error': 'Dream not found'}), 404
+
+
 @app.route('/user/<string:user_id>/dreams', methods=['GET'])
 def get_dreams(user_id):
+
     dreams = Dream.query.filter_by(user_id=user_id).order_by(
         Dream.created_at.desc()).all()
+    
     results = [{
-        'id': d.id,
         'title': d.title,
         'type': d.type,
         'created_at': d.created_at.isoformat()
@@ -255,8 +271,8 @@ def get_dreams(user_id):
     return jsonify({'dreams': results})
 
 
-@app.route('/user/<string:user_id>/dream/<dream_id>/analysis', methods=['GET'])
-def get_dream_analysis(user_id, dream_id, content, emotions):
+@app.route('/user/<string:user_id>/dream/<created_at>/analysis', methods=['GET'])
+def get_dream_analysis(user_id, created_at, content, emotions):
     # 예시 코드, 실제로는 분석 결과가 반환
     if emotions is not None:
         agent = EmotionAgent(emotions)
@@ -267,8 +283,8 @@ def get_dream_analysis(user_id, dream_id, content, emotions):
     return jsonify(analysis_result)
 
 
-@app.route('/user/<user_id>/dream/<dream_id>/chat', methods=['POST'])
-def process_chat_message(user_id, dream_id):
+@app.route('/user/<user_id>/dream/<created_at>/chat', methods=['POST'])
+def process_chat_message(user_id, created_at):
     data = request.get_json()
     if not data or 'message' not in data:
         return jsonify({"error": "메시지가 제공되지 않았습니다"}), 400
