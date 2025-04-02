@@ -1,6 +1,6 @@
 from flask import Flask, json, jsonify, request
 from flask_cors import CORS
-import uuid
+# import uuid
 from datetime import datetime
 # import json
 
@@ -9,18 +9,18 @@ from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
 
 import os
-import fitz  # PyMuPDF
+# import fitz  # PyMuPDF
 from dotenv import load_dotenv
 
-from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_upstage.embeddings import UpstageEmbeddings
-from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+# from langchain.schema import Document
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain_upstage.embeddings import UpstageEmbeddings
+# from langchain_qdrant import QdrantVectorStore
+# from qdrant_client import QdrantClient
+# from qdrant_client.models import Distance, VectorParams
 
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch
+# from transformers import AutoTokenizer, AutoModelForSequenceClassification
+# import torch
 
 # batch_parse.py 참조
 from batch_parse import process_pdfs
@@ -48,7 +48,9 @@ bcrypt = Bcrypt(app)
 
 # 최대 파일 크기 제한 10MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+
 # print("max_length = ", app.config.get("MAX_CONTENT_LENGTH"))
+
 
 # User 모델 정의
 class User(db.Model):
@@ -91,7 +93,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 @app.route('/')
 def home():
-    # print(request.headers) 
+    # print(request.headers)
     return "Bot is online"
 
 
