@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_BASE_URL = "https://bf7c9bc2-2560-4704-a3a0-f9c4d3a9c78a-00-7ew1tl3q0m4b.sisko.replit.dev";
+const API_BASE_URL = "여기에 새로운 백엔드 서버 URL 입력";
   // src/services/api.js의 authService 부분만 수정
   export const authService = {
     // 로그인
