@@ -1,17 +1,20 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Filter, FieldCondition, MatchValue
+from qdrant_client.http.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import requests
 import torch
-import time
 import json
+import uuid
+from dotenv import load_dotenv
+import os
 
-# ========== 설정 ==========
-QDRANT_URL = "https://529d695f-e2f3-4aa5-b296-045362eda29c.europe-west3-0.gcp.cloud.qdrant.io"
-QDRANT_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.Daz2xEpELRIy3diszu_aAj8aiVoObzyAcDmA-I9LCJQ"
-EMBEDDING_API_KEY = "up_ksfeJdqOSHRxTrTFk4tO2hCxyGzfv"
+# ===== 설정 =====
+load_dotenv()
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+EMBEDDING_API_KEY = os.getenv("UPSTAGE_API_KEY")
 
-# 감정 분석 모델
+# ===== 감정 분석 모델 =====
 model_name = "j-hartmann/emotion-english-distilroberta-base"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
@@ -24,6 +27,7 @@ emotion_labels = [
     'relief', 'remorse', 'sadness', 'surprise', 'neutral'
 ]
 
+# ===== 감정 분석 =====
 def analyze_emotions(text, threshold=0.3):
     inputs = tokenizer(text, return_tensors="pt", truncation=True)
     with torch.no_grad():
@@ -36,50 +40,65 @@ def analyze_emotions(text, threshold=0.3):
     ]
     return sorted(results, key=lambda x: x["score"], reverse=True)
 
-def get_embedding(text):
-    url = "https://api.upstage.ai/v1/solar/embeddings"
-    headers = {
-        'Authorization': f'Bearer {EMBEDDING_API_KEY}',
-        'Content-Type': 'application/json'
-    }
-    payload = {
-        "model": "embedding-passage",
-        "input": text
-    }
-    response = requests.post(url, headers=headers, json=payload)
+# ===== 텍스트 청크 분할 =====
+def split_text_into_chunks(text, max_tokens=4000):
+    approx_chunk_size = max_tokens * 4  # 영어 기준 1 token ≈ 4 chars
+    return [text[i:i+approx_chunk_size] for i in range(0, len(text), approx_chunk_size)]
 
-    if response.status_code != 200:
-        print(f"[EMBED ERROR] {response.status_code} - {response.text}")
+# ===== 임베딩 평균 계산 =====
+def get_mean_embedding(text):
+    chunks = split_text_into_chunks(text)
+    vectors = []
+
+    for chunk in chunks:
+        url = "https://api.upstage.ai/v1/solar/embeddings"
+        headers = {
+            'Authorization': f'Bearer {EMBEDDING_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            "model": "embedding-passage",
+            "input": chunk
+        }
+        response = requests.post(url, headers=headers, json=payload)
+
+        if response.status_code != 200:
+            print(f"[EMBED ERROR] {response.status_code} - {response.text}")
+            continue
+
+        try:
+            vector = response.json()['data'][0]['embedding']
+            vectors.append(vector)
+        except Exception as e:
+            print(f"[EMBED JSON ERROR] {e} | 응답: {response.text}")
+            continue
+
+    if not vectors:
         return []
 
-    try:
-        return response.json()['data'][0]['embedding']
-    except Exception as e:
-        print(f"[EMBED JSON ERROR] {e} | 응답: {response.text}")
-        return []
+    # 평균 벡터 계산
+    mean_vector = [sum(dim) / len(vectors) for dim in zip(*vectors)]
+    return mean_vector
 
-# ========== 핵심 실행 ==========
+# ===== Qdrant 처리 =====
 def process_qdrant_document(user_id: str, title: str):
-    collection_name = f"dream-{user_id}"
-    print(f"🔍 컬렉션: {collection_name}, 타이틀: {title}")
+    source_collection = f"dream-{user_id}"
+    target_collection = f"dream-{user_id}-emotion"
+    print(f"🔍 분석 대상 컬렉션: {source_collection}, 타이틀: {title}")
 
-    # Qdrant 연결
     client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
-    # 존재 확인
-    collection_names = [c.name for c in client.get_collections().collections]
-    if collection_name not in collection_names:
-        print(f"❌ 컬렉션 '{collection_name}' 이 존재하지 않습니다.")
-        print(f"📂 현재 존재하는 컬렉션들: {collection_names}")
+    # 원본 컬렉션 존재 확인
+    collections = [c.name for c in client.get_collections().collections]
+    if source_collection not in collections:
+        print(f"❌ 컬렉션 '{source_collection}' 이 존재하지 않습니다.")
         return
 
-    # title에 해당하는 모든 포인트 불러오기
+    # 해당 title의 문서 조회
     scroll_result = client.scroll(
-        collection_name=collection_name,
+        collection_name=source_collection,
         scroll_filter=Filter(
-            must=[
-                FieldCondition(key="metadata.title", match=MatchValue(value=title))
-            ]
+            must=[FieldCondition(key="metadata.title", match=MatchValue(value=title))]
         ),
         with_payload=True,
         limit=1000
@@ -90,31 +109,39 @@ def process_qdrant_document(user_id: str, title: str):
         print("해당 title의 데이터가 없습니다.")
         return
 
-    # page_content 합치기
     combined_text = " ".join(p.payload.get("page_content", "") for p in points)
 
-    # 감정 분석
     emotions = analyze_emotions(combined_text)
+    embedding = get_mean_embedding(combined_text)
 
-    # 임베딩 생성
-    embedding = get_embedding(combined_text)
+    if not embedding:
+        print("❌ 임베딩 생성 실패")
+        return
 
-    # 저장
-    result = {
-        "title": title,
-        "user_id": user_id,
-        "full_text": combined_text,
-        "emotions": emotions,
-        "embedding": embedding
-    }
+    # 감정 결과 저장용 컬렉션 없으면 생성
+    if target_collection not in collections:
+        client.recreate_collection(
+            collection_name=target_collection,
+            vectors_config=VectorParams(size=len(embedding), distance=Distance.COSINE)
+        )
+        print(f"✅ 새로운 컬렉션 생성됨: {target_collection}")
 
-    output_path = f"{title}_analyzed.json"
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
+    # 포인트 생성 및 업로드
+    point = PointStruct(
+        id=str(uuid.uuid4()),
+        vector=embedding,
+        payload={
+            "user_id": user_id,
+            "title": title,
+            "emotions": emotions,
+            "full_text": combined_text
+        }
+    )
 
-    print(f"분석 결과 저장 완료: {output_path}")
+    client.upsert(collection_name=target_collection, points=[point])
+    print(f"📌 '{target_collection}'에 감정 분석 결과 업로드 완료!")
 
-# ========== 예시 실행 ==========
+# ===== 실행 =====
 if __name__ == "__main__":
     user_id = input("사용자 ID 입력: ").strip()
     title = input("분석할 문서 title 입력: ").strip()
