@@ -22,13 +22,12 @@ ___
 ⚙️ 기술 스택 (Tech Stack)
 |영역|기술|
 |--|--|
-|프론트엔드|React, TailwindCSS|
-|백엔드|Flask, FastAPI|
+|프론트엔드|React|
+|백엔드|Flask|
 |벡터 데이터베이스|Qdrant Cloud|
 |임베딩|Upstage Embedding API|
-|NLP| 분석	감정 분석, 주제 분석, CBT/융/프로이트 해석|
 |RAG|	LangChain, QdrantVectorStore|
-|기타|	SQLite (로그인 및 사용자 데이터), Kakao i Open Builder (챗봇/의도 분석)|
+|기타|	SQLite (로그인 및 사용자 데이터),documnet parse, LLM|
 
 ___
 ```
@@ -61,6 +60,12 @@ ___
 Application Screens
 
 ![image](https://www.google.co.kr/url?sa=i&url=https%3A%2F%2Fwww.donga.com%2Fnews%2FCulture%2Farticle%2Fall%2F20170125%2F82580811%2F1&psig=AOvVaw3W-4aB2nX3q0brOD6nj4zc&ust=1743690601763000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCICYsOnHuYwDFQAAAAAdAAAAABAE)
+___
+사용법
+1. 회원가입을 진행한다.
+2. 로그인을 한다.
+3. 꿈 일기를 업로드한다(직접 입력,pdf,txt)
+4. 분석 결과를 보고 챗 봇과 대화
 ___
 💡 향후 계획 (Roadmap)
  - GPT와 꿈에 대한 대화형 상담 기능 추가
