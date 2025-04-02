@@ -1,7 +1,8 @@
 from flask import Flask, json, jsonify, request
 from flask_cors import CORS
-# import uuid
+import uuid
 from datetime import datetime
+from dateutil import parser
 # import json
 
 from flask_sqlalchemy import SQLAlchemy
@@ -84,8 +85,7 @@ class Dream(db.Model):
     # 행동 분석 결과 넣어버리기
 
     def __init__(self, user_id, title, date, content, type, emotions, file_path=None):
-        # self.dream_id = dream_id
-        self.id = None  # id를 None으로 설정하면 SQLAlchemy가 자동으로 생성
+        self.id = str(uuid.uuid4())
         self.user_id = user_id
         self.title = title
         self.content = content
@@ -210,13 +210,18 @@ def submit_dream_file(user_id):
 
         file_ext = os.path.splitext(filename)[1].lower()
         # 확장자가 .pdf일 경우만 실행
+        if file.mimetype != 'application/pdf':
+            return jsonify({'error': 'Only PDF files are supported'}), 400
+        # 예외 처리가 2개인가?
         if file_ext == '.pdf':
-            # batch_parse.py의 함수 실행
-            content = process_pdfs(UPLOAD_FOLDER, user_id, title)
-            # emotion_analysis.py의 함수 실행
-            emotions = process_qdrant_document(user_id, title)
-            # 디버깅
-            print(emotions)
+            try:
+                content = process_pdfs(UPLOAD_FOLDER, user_id, title)
+                emotions = process_qdrant_document(user_id, title)
+            except Exception as e:
+                return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
+    
+        # 디버깅
+        print(emotions)
 
     else:
         return jsonify({'error': 'Empty filename'}), 400
@@ -244,7 +249,11 @@ def submit_dream_file(user_id):
 # 특정 사용자의 특정 꿈 정보를 조회하는 API
 @app.route('/user/<string:user_id>/dream/<created_at>', methods=['GET'])
 def get_dream(user_id, created_at):
-
+    try:
+        created_at_dt = parser.parse(created_at)
+    except Exception:
+        return jsonify({'error': 'Invalid datetime format'}), 400
+    
     dream = Dream.query.filter_by(user_id=user_id, created_at=created_at).first()
     
     if dream:
@@ -273,13 +282,19 @@ def get_dreams(user_id):
 
 
 @app.route('/user/<string:user_id>/dream/<created_at>/analysis', methods=['GET'])
-def get_dream_analysis(user_id, created_at, content, emotions):
-    # 예시 코드, 실제로는 분석 결과가 반환
-    if emotions is not None:
-        agent = EmotionAgent(emotions)
-        prompt = agent.create_llm_prompt(content)
-        # 예외 처리 필요
-        analysis_result = agent.call_solar_llm(prompt)
+def get_dream_analysis(user_id, created_at):
+    try:
+        created_at_dt = parser.parse(created_at)
+    except Exception:
+        return jsonify({'error': 'Invalid datetime format'}), 400
+
+    dream = Dream.query.filter_by(user_id=user_id, created_at=created_at_dt).first()
+    if not dream:
+        return jsonify({'error': 'Dream not found'}), 404
+    
+    agent = EmotionAgent(dream.emotions)
+    prompt = agent.create_llm_prompt(dream.content)
+    analysis_result = agent.call_solar_llm(prompt)
     print("analysis_result = ", jsonify(analysis_result))
     return jsonify(analysis_result)
 
