@@ -1,15 +1,12 @@
 import json
-import requests
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import os
+import requests
 from dotenv import load_dotenv
 
 # 환경 변수 로드
 load_dotenv()
-
-# API 키를 환경 변수에서 가져오기 (없으면 기본값 사용)
-SOLAR_API_KEY = os.getenv("SOLAR_API_KEY", "up_MuJY4ZmMczx8C6XEIB7FjHHjw0qy4")
 
 # 한글 폰트 설정 (Windows 기준)
 font_path = "C:/Windows/Fonts/malgun.ttf"
@@ -37,11 +34,9 @@ label_map = {
 
 class EmotionAgent:
     def __init__(self, emotion_scores):
-        # 감정 점수를 저장하고, 딕셔너리로 변환
         self.emotions = [{"label": label, "score": score} for label, score in emotion_scores.items()]
 
     def analyze_emotions(self):
-        # 감정 분석 로직 (예시: 부정적인 감정이 두 가지 이상이면 위험 상태)
         negative_emotions = ["sadness", "fear", "anger", "confusion"]
         negative_count = sum(1 for e in self.emotions if e["label"] in negative_emotions and e["score"] > 0.5)
 
@@ -53,9 +48,8 @@ class EmotionAgent:
             return {"tag": "긍정 감정 상태", "level": "안정", "message": "긍정적인 감정이 감지됩니다."}
 
     def create_llm_prompt(self, user_text=None):
-        # 먼저 감정 분석을 수행
         emotion_analysis = self.analyze_emotions()
-        
+
         prompt = f"""
         너는 공감 능력 높은 심리상담사입니다.  
         당신의 목표는 사용자의 감정 상태를 이해하고, 공감과 질문, 조언을 통해 안정감을 주는 것입니다.
@@ -69,11 +63,10 @@ class EmotionAgent:
         """
         for e in self.emotions:
             prompt += f"- {label_map.get(e['label'], e['label'])}: {e['score']}\n"
-        
-        # 사용자 입력이 있으면 추가
+
         if user_text:
             prompt += f"\n[사용자 메시지]\n{user_text}\n"
-        
+
         prompt += """
         👉 아래 순서로 대화를 생성하세요:
         1. 감정에 진심으로 공감하는 말 한마디
@@ -90,26 +83,32 @@ class EmotionAgent:
         return prompt
 
     def call_solar_llm(self, prompt):
-        # Solar API 호출 함수 (API URL 및 Key 설정)
-        api_url = "https://api.upstage.ai/v1/chat/completions"  # 수정된 Solar API URL
-        headers = {
-            "Authorization": f"Bearer {SOLAR_API_KEY}",  # 환경 변수에서 가져온 API 키 사용
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": "solar-1",  # 사용할 모델 이름
-            "messages": [{"role": "user", "content": prompt}]
-        }
+        try:
+            api_key = os.getenv("SOLAR_API_KEY")
+            url = "https://api.upstage.ai/v1/chat/completions"
 
-        response = requests.post(api_url, headers=headers, json=payload)
-        if response.status_code == 200:
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            payload = {
+                "model": "solar-pro",
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.7
+            }
+
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"]
-        else:
-            print(f"API 호출 실패: {response.status_code}, {response.text}")
+
+        except Exception as e:
+            print(f"❌ Solar API 호출 실패: {e}")
             return None
 
     def visualize_emotions(self):
-        # 감정 시각화 함수
         labels = [label_map.get(e["label"], e["label"]) for e in self.emotions]
         scores = [e["score"] for e in self.emotions]
 
