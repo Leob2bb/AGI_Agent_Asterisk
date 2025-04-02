@@ -131,6 +131,7 @@ def process_qdrant_document(user_id: str, title: str):
         print("❌ 임베딩 생성 실패")
         return
     
+    # 감정 결과 합쳐서 Qdrant에 업로드
     # 감정 결과 저장용 컬렉션 없으면 생성
     if target_collection not in collections:
         qdrant_client.recreate_collection(
@@ -141,17 +142,17 @@ def process_qdrant_document(user_id: str, title: str):
 
     # 포인트 생성 및 업로드
     point = PointStruct(
-        id=str(uuid.uuid4()),
-        vector=embedding,
+        id=str(uuid.uuid4()),   # 문서를 잘라서 넣는데, 각 문서인지 구분하는 id
+        vector=embedding,   # 이게 꿈 일기 임베딩된 것
         payload={
             "user_id": user_id,
             "title": title,
-            "emotions": emotions,
-            "full_text": combined_text
+            "emotions": emotions
+            # 사건, 행동 관련 api 분석 결과
         }
     )
 
-    client.upsert(collection_name=target_collection, points=[point])
+    qdrant_client.upsert(collection_name=target_collection, points=[point])
     print(f"📌 '{target_collection}'에 감정 분석 결과 업로드 완료!")
 
 
