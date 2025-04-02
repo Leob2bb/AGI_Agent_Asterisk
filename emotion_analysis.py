@@ -1,6 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue, PointStruct, Distance, VectorParams
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from dream_symbol_analysis import analyze_symbols_and_intentions # 상징과 의도 분석을 위한 모듈 임포트
 import requests
 import torch
 import os
@@ -124,6 +125,8 @@ def process_qdrant_document(user_id: str, title: str):
 
     # 감정 분석
     emotions = analyze_emotions(combined_text)
+    # ✅ 수정: 상징/의도 해석도 같이 실행 (GPT 자동 조건부 포함)
+    symbolic_result = analyze_symbols_and_intentions(combined_text)
     # 임베딩 생성
     embedding = get_embedding(combined_text)
 
@@ -147,11 +150,13 @@ def process_qdrant_document(user_id: str, title: str):
             "user_id": user_id,
             "title": title,
             "emotions": emotions,
+            "symbols": symbolic_result["symbols"],           #symbol과 의도 분석 결과 추가
+            "intentions": symbolic_result["intentions"],
             "full_text": combined_text
         }
     )
 
-    client.upsert(collection_name=target_collection, points=[point])
+    qdrant_client.upsert(collection_name=target_collection, points=[point])
     print(f"📌 '{target_collection}'에 감정 분석 결과 업로드 완료!")
 
 
