@@ -97,7 +97,8 @@ export const dreamService = {
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/file`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Accept': 'application/json'
         },
         body: formData
       });
