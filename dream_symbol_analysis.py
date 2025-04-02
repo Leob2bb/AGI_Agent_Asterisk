@@ -2,13 +2,14 @@
 import os
 import requests
 from dotenv import load_dotenv
+import json
 
 # .env 로드
 load_dotenv()
 
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 
-# ✅ 상징 사전
+# 확장된 상징 사전
 symbol_dict = {
     "물": "감정, 무의식",
     "바다": "광대한 감정, 무의식",
@@ -20,52 +21,37 @@ symbol_dict = {
     "빛": "희망, 진실, 자각",
     "고래": "깊은 감정, 무의식과의 연결",
     "뱀": "불안, 변화, 치유",
+    "호랑이": "힘, 공격성, 본능",
+    "늑대": "고독, 직관, 본능적 욕구",
     "새": "자유, 정신적 상승",
     "거미": "복잡한 감정, 통제 욕구",
     "나무": "생명력, 자기 성장",
+    "비": "감정 정화, 슬픔, 변화",
     "떨어짐": "불안, 실패, 통제력 상실",
     "비행": "자유, 도피, 해방",
     "도망": "문제 회피, 스트레스",
     "죽음": "종결, 변화, 새로운 시작",
     "아이": "순수성, 보호 본능",
     "학교": "학습, 평가, 과거의 압박",
-    "집": "자기 정체성, 내면세계",
     "병원": "치유, 회복, 불안감",
+    "집": "자기 정체성, 내면세계",
     "길": "인생의 방향, 선택",
     "엄마": "보호, 의존, 감정 연결",
-    "죽은 사람": "미련, 회한, 과거와의 연결",
-    "연인": "애착, 욕망, 관계 갈등"
+    "아버지": "권위, 보호자, 도전",
+    "연인": "애착, 욕망, 관계 갈등",
+    "죽은 사람": "미련, 회한, 과거와의 연결"
 }
 
-# ✅ 의도 추론 규칙
-intention_rules = [
-    ("떨어지다", "심리적 불안정, 실패에 대한 두려움"),
-    ("도망치다", "문제를 회피하려는 심리"),
-    ("숨다", "불안 회피, 외부 자극 차단 욕구"),
-    ("울다", "감정의 해소, 내면 슬픔 표현"),
-    ("죽다", "자아의 변화, 새로운 시작에 대한 두려움"),
-    ("불나다", "강렬한 감정 폭발 또는 파괴 욕구"),
-    ("연인", "관계 욕구, 소속감 또는 이별 불안"),
-    ("학교", "자기 평가, 과거 스트레스"),
-    ("아이", "보호받고 싶은 욕망, 순수함"),
-    ("비행", "현실 회피, 해방 욕구")
-]
-
+# 상징 추출 (symbol_dict 기반)
 def extract_symbols(text):
-    found_symbols = []
-    for keyword, meaning in symbol_dict.items():
-        if keyword in text:
-            found_symbols.append({"object": keyword, "meaning": meaning})
-    return found_symbols
+    return [
+        {"object": keyword, "meaning": meaning}
+        for keyword, meaning in symbol_dict.items()
+        if keyword in text
+    ]
 
-def infer_intentions(text):
-    inferred = []
-    for keyword, meaning in intention_rules:
-        if keyword in text:
-            inferred.append(meaning)
-    return list(set(inferred)) or ["명확한 의도 분석 불가"]
-
-def gpt_symbolic_supplement(text):
+# LLM를 이용한 의도 해석
+def llm_intention_supplement(text):
     url = "https://api.upstage.ai/v1/solar/chat/completions"
     headers = {
         "Authorization": f"Bearer {UPSTAGE_API_KEY}",
@@ -74,19 +60,26 @@ def gpt_symbolic_supplement(text):
     payload = {
         "model": "solar-pro-1-chat",
         "messages": [
-            {"role": "system", "content": "당신은 꿈 분석 전문가입니다. 사용자의 꿈 내용을 기반으로 상징적 의미를 심리학적으로 추론해 주세요."},
-            {"role": "user", "content": f"""
-다음 꿈 내용을 상징적으로 해석해주세요.
+            {
+                "role": "system",
+                "content": "당신은 꿈 해석 전문가입니다. 사용자의 꿈 내용을 바탕으로 꿈 속 행동이나 상황이 나타내는 심리적 의도 또는 무의식을 추론해주세요."
+            },
+            {
+                "role": "user",
+                "content": f"""
+다음은 꿈 내용입니다. 이 꿈에서 사용자의 **의도**, **심리적 상태**, **무의식의 목적**을 해석해주세요.
 
 {text}
 
-각 사물, 행동, 등장인물 등이 어떤 심리적/상징적 의미를 갖는지 분석해 주세요.
-결과는 반드시 JSON 배열로 출력해주세요. 형식 예:
+결과는 한국어로 JSON 배열 형태로 반환해주세요.
+예시:
 [
-  {{ "object": "고래", "meaning": "무의식과의 연결" }},
-  {{ "object": "물", "meaning": "감정, 무의식" }}
+  "심리적 불안정과 통제력 상실",
+  "외부 자극 회피",
+  "감정 해소 욕구"
 ]
-"""}
+"""
+            }
         ]
     }
 
@@ -94,7 +87,49 @@ def gpt_symbolic_supplement(text):
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             gpt_response = response.json()['choices'][0]['message']['content']
-            import json
+            return json.loads(gpt_response)
+        else:
+            print(f"[GPT ERROR] {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"[GPT PARSE ERROR] {e}")
+    return ["명확한 의도 분석 불가"]
+
+# LLM 기반 상징 해석 (보완용)
+def llm_symbolic_supplement(text):
+    url = "https://api.upstage.ai/v1/solar/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {UPSTAGE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "solar-pro-1-chat",
+        "messages": [
+            {
+                "role": "system",
+                "content": "당신은 꿈 해석 전문가입니다. 꿈 내용을 심리학적으로 상징 분석 해주세요."
+            },
+            {
+                "role": "user",
+                "content": f"""
+다음 꿈 내용에서 상징적인 사물, 행동, 인물 등을 찾아 심리적 의미로 해석해주세요.
+
+{text}
+
+반드시 JSON 배열 형태로 반환해주세요.
+예시:
+[
+  {{ "object": "물", "meaning": "감정, 무의식" }},
+  {{ "object": "절벽", "meaning": "위기의 순간, 중요한 선택" }}
+]
+"""
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 200:
+            gpt_response = response.json()['choices'][0]['message']['content']
             return json.loads(gpt_response)
         else:
             print(f"[GPT ERROR] {response.status_code} - {response.text}")
@@ -102,24 +137,23 @@ def gpt_symbolic_supplement(text):
         print(f"[GPT PARSE ERROR] {e}")
     return []
 
+# 메인 함수
 def analyze_symbols_and_intentions(text):
-    rules_result = {
-        "symbols": extract_symbols(text),
-        "intentions": infer_intentions(text)
-    }
+    symbols = extract_symbols(text)
 
-    should_use_gpt = (
-        len(rules_result["symbols"]) < 2 or
-        rules_result["intentions"] == ["명확한 의도 분석 불가"]
-    )
-
-    if should_use_gpt:
-        print("🤖 GPT 보완 해석 활성화됨 (규칙 기반 결과 부족)")
-        gpt_symbols = gpt_symbolic_supplement(text)
-        existing_objects = {s["object"] for s in rules_result["symbols"]}
-        new_symbols = [s for s in gpt_symbols if s["object"] not in existing_objects]
-        rules_result["symbols"].extend(new_symbols)
+    # 상징이 너무 적을 때만 llm으으로 보완
+    if len(symbols) < 2:
+        print("🤖 GPT 상징 해석 보완 수행")
+        gpt_symbols = llm_symbolic_supplement(text)
+        existing = {s['object'] for s in symbols}
+        symbols += [s for s in gpt_symbols if s['object'] not in existing]
     else:
-        print("✅ 규칙 기반 해석으로 충분하여 GPT 호출 생략")
+        print("✅ 규칙 기반 상징 해석으로 충분")
 
-    return rules_result
+    # 의도는 항상 GPT로 수행
+    intentions = llm_intention_supplement(text)
+
+    return {
+        "symbols": symbols,
+        "intentions": intentions
+    }
