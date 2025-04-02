@@ -13,7 +13,7 @@ subreddit = reddit.subreddit("Dreams")
 
 # 3. 데이터 수집
 dreams = []
-for submission in subreddit.hot(limit=50):  # 최신 인기글 50개 수집
+for submission in subreddit.hot(limit=300):  # 최신 인기글 300개 수집
     if submission.selftext.strip():  # 내용이 있는 글만 저장
         dreams.append({
             "title": submission.title,

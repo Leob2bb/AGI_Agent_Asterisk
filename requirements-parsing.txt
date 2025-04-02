@@ -55,7 +55,7 @@ SQLAlchemy==2.0.40
 starlette==0.46.1
 sympy==1.13.1
 tenacity==9.0.0
-tokenizers==0.21.1
+tokenizers==0.19.1
 torch==2.6.0
 tqdm==4.67.1
 transformers==4.50.3
