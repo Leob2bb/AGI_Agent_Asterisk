@@ -9,79 +9,91 @@ from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
-# 1. 환경 변수 로드 (.env에 키들 있어야 함)
+# 환경 변수 로드
 load_dotenv()
-
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-COLLECTION_NAME = "dream-papers"
 
 assert UPSTAGE_API_KEY, ".env에 UPSTAGE_API_KEY가 필요합니다."
 assert QDRANT_URL and QDRANT_API_KEY, "Qdrant 설정이 누락되었습니다."
 
-# 2. Qdrant 연결 및 임베딩 모델 설정
-qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-embedding_model = UpstageEmbeddings(api_key=UPSTAGE_API_KEY, model="embedding-passage")
 
-# 3. 텍스트 분할기 (500자 기준 청크)
-splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
+def process_pdfs(pdf_dir, collection_name, chunk_size=1000, chunk_overlap=50):
+    """
+    PDF 폴더 내 모든 PDF를 처리하여 Qdrant에 업로드하고, content를 텍스트로 return하는 함수
 
-# 4. PDF 파일이 들어있는 폴더 경로
-PDF_DIR = r"C:\\Users\\SIM\\Desktop\\pdf"
-all_chunks = []
+    Args:
+        pdf_dir (str): PDF 파일이 들어있는 폴더 경로
+        collection_name (str): 저장할 Qdrant 컬렉션 이름
+        chunk_size (int): 텍스트 청크 크기
+        chunk_overlap (int): 청크 간 오버랩 크기
+    """
 
-# 5. PDF → 텍스트 → 청크 + 메타데이터 처리
-for filename in os.listdir(PDF_DIR):
-    if not filename.lower().endswith(".pdf"):
-        continue
+    # Qdrant 클라이언트 및 임베딩 모델 설정
+    qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+    embedding_model = UpstageEmbeddings(api_key=UPSTAGE_API_KEY,
+                                        model="embedding-passage")
 
-    pdf_path = os.path.join(PDF_DIR, filename)
-    doc = fitz.open(pdf_path)
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    doc.close()
+    # 텍스트 분할기
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
+                                              chunk_overlap=chunk_overlap)
 
-    title = os.path.splitext(filename)[0]  # 파일명에서 .pdf 제거
+    all_chunks = []
 
-    # 청크 생성 + 각 청크에 메타데이터 추가
-    chunks = splitter.create_documents([text], metadatas=[{
-        "title": title,
-        "source": filename
-    }])
-    all_chunks.extend(chunks)
+    # PDF → 텍스트 변환 및 청크 생성
+    for filename in os.listdir(pdf_dir):
+        if not filename.lower().endswith(".pdf"):
+            continue
 
-print(f"총 청크 수: {len(all_chunks)}")
+        pdf_path = os.path.join(pdf_dir, filename)
+        doc = fitz.open(pdf_path)
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        doc.close()
 
-# Qdrant에 컬렉션이 없으면 생성
-existing_collections = qdrant_client.get_collections().collections
-existing_names = [c.name for c in existing_collections]
+        title = os.path.splitext(filename)[0]  # 파일명에서 .pdf 제거
 
-if COLLECTION_NAME not in existing_names:
-    qdrant_client.create_collection(
-        collection_name=COLLECTION_NAME,
-        vectors_config=VectorParams(
-            size=4096,  # Upstage 임베딩 차원 수
-            distance=Distance.COSINE
-        )
+        chunks = splitter.create_documents([text],
+                                           metadatas=[{
+                                               "title": title,
+                                               "source": filename
+                                           }])
+        all_chunks.extend(chunks)
+
+    print(f"총 청크 수: {len(all_chunks)}")
+
+    # Qdrant 컬렉션 확인 및 생성
+    existing_collections = qdrant_client.get_collections().collections
+    existing_names = [c.name for c in existing_collections]
+
+    if collection_name not in existing_names:
+        qdrant_client.create_collection(collection_name=collection_name,
+                                        vectors_config=VectorParams(
+                                            size=4096,
+                                            distance=Distance.COSINE))
+        print(f"Qdrant 컬렉션 생성됨: {collection_name}")
+    else:
+        print(f"Qdrant 컬렉션 존재 확인됨: {collection_name}")
+
+    # Qdrant에 업로드
+    vectorstore = QdrantVectorStore.from_documents(
+        documents=all_chunks,
+        embedding=embedding_model,
+        url=QDRANT_URL,
+        api_key=QDRANT_API_KEY,
+        collection_name=collection_name,
+        force_recreate=False  # 기존 컬렉션에 추가됨
     )
-    print(f"Qdrant 컬렉션 생성됨: {COLLECTION_NAME}")
-else:
-    print(f"Qdrant 컬렉션 존재 확인됨: {COLLECTION_NAME}")
+    vectorstore.add_documents(all_chunks)
 
-# 6. Qdrant 업로드
-# qdrant_client.delete_collection(COLLECTION_NAME)
+    print(f"Qdrant 업로드 완료! 컬렉션: {collection_name}")
 
-vectorstore = QdrantVectorStore.from_documents(
-    documents=all_chunks,
-    embedding=embedding_model,
-    url=QDRANT_URL,
-    api_key=QDRANT_API_KEY,
-    collection_name=COLLECTION_NAME,
-    force_recreate=True  #기존 컬렉션 삭제하고 새로 생성
-)
+    return "\n".join([chunk.page_content for chunk in all_chunks])
 
-vectorstore.add_documents(all_chunks)
 
-print(f"Qdrant 업로드 완료! 컬렉션: {COLLECTION_NAME}")
+# 사용 예시
+if __name__ == "__main__":
+    PDF_DIR = r"./uploads"
+    process_pdfs(PDF_DIR, collection_name="test")

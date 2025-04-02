@@ -1,0 +1,14 @@
+[project]
+name = "python-template"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+requires-python = ">=3.11"
+dependencies = [
+    "flask-sqlalchemy>=3.1.1",
+    "flask>=3.1.0",
+    "flask-cors>=5.0.1",
+    "flask-bcrypt>=1.0.1",
+    "fitz>=0.0.1.dev2",
+    "requests>=2.32.3",
+]
