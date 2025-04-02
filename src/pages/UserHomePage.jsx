@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DreamEntryForm from '../components/DreamEntryForm';
-import AnalysisResult from '../components/AnalysisResult';
 import { dreamService, authService } from '../services/api';
 
 function UserHomePage({ currentUser, setCurrentUser }) {
   const { userId } = useParams();
   const [dreamHistory, setDreamHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [showAnalysis, setShowAnalysis] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +21,6 @@ function UserHomePage({ currentUser, setCurrentUser }) {
         setLoading(false);
       }
     };
-
     fetchDreamHistory();
   }, [userId]);
 
@@ -35,22 +31,18 @@ function UserHomePage({ currentUser, setCurrentUser }) {
   };
 
   const handleDreamSubmit = async (result) => {
-    // 분석 결과 표시
-    setAnalysisResult(result);
-    setShowAnalysis(true);
-
     // 꿈 기록 갱신
     try {
       const history = await dreamService.getDreamHistory(userId);
       setDreamHistory(history);
+
+      // 새로 생성된 꿈의 분석 페이지로 이동
+      if (result && result.id) {
+        navigate(`/user/${userId}/dream/${result.id}`);
+      }
     } catch (error) {
       console.error('Failed to update dream history:', error);
     }
-  };
-
-  const handleBackToForm = () => {
-    setShowAnalysis(false);
-    setAnalysisResult(null);
   };
 
   // 권한 확인 - 현재 로그인한 사용자와 페이지 사용자가 일치하는지
@@ -68,28 +60,13 @@ function UserHomePage({ currentUser, setCurrentUser }) {
         </div>
       </header>
 
-      {showAnalysis ? (
-        <section className="analysis-section">
-          <div className="section-header">
-            <h2>꿈 분석 결과</h2>
-            <button onClick={handleBackToForm} className="back-button">
-              새 꿈 입력하기
-            </button>
-          </div>
-          {analysisResult && (
-            <AnalysisResult analysis={analysisResult} />
-          )}
-        </section>
-      ) : (
-        <section className="dream-entry-section">
-          <h2>꿈 일기 작성</h2>
-          <DreamEntryForm onSuccess={handleDreamSubmit} userId={userId} />
-        </section>
-      )}
+      <section className="dream-entry-section">
+        <h2>꿈 일기 작성</h2>
+        <DreamEntryForm onSuccess={handleDreamSubmit} userId={userId} />
+      </section>
 
       <section className="dream-history-section">
         <h2>나의 꿈 기록</h2>
-
         {loading ? (
           <div className="loading">로딩 중...</div>
         ) : dreamHistory.length > 0 ? (
@@ -101,10 +78,7 @@ function UserHomePage({ currentUser, setCurrentUser }) {
                   <p className="dream-date">{new Date(dream.date).toLocaleDateString()}</p>
                 </div>
                 <button 
-                  onClick={() => {
-                    setAnalysisResult(dream.analysis);
-                    setShowAnalysis(true);
-                  }}
+                  onClick={() => navigate(`/user/${userId}/dream/${dream.id}`)}
                   className="view-button"
                 >
                   분석 결과 보기
