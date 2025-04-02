@@ -9,6 +9,9 @@ from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
+# emotion_analysis.py
+from emotion_analysis import process_qdrant_document
+
 # 환경 변수 로드
 load_dotenv()
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
@@ -19,17 +22,18 @@ assert UPSTAGE_API_KEY, ".env에 UPSTAGE_API_KEY가 필요합니다."
 assert QDRANT_URL and QDRANT_API_KEY, "Qdrant 설정이 누락되었습니다."
 
 
-def process_pdfs(pdf_dir, collection_name, chunk_size=1000, chunk_overlap=50):
+def process_pdfs(pdf_dir, user_id, title, chunk_size=1000, chunk_overlap=50):
     """
     PDF 폴더 내 모든 PDF를 처리하여 Qdrant에 업로드하고, content를 텍스트로 return하는 함수
 
     Args:
         pdf_dir (str): PDF 파일이 들어있는 폴더 경로
-        collection_name (str): 저장할 Qdrant 컬렉션 이름
+        user_id: 사용자 id
         chunk_size (int): 텍스트 청크 크기
         chunk_overlap (int): 청크 간 오버랩 크기
     """
 
+    collection_name = f"dream-{user_id}"
     # Qdrant 클라이언트 및 임베딩 모델 설정
     qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
     embedding_model = UpstageEmbeddings(api_key=UPSTAGE_API_KEY,
@@ -89,6 +93,9 @@ def process_pdfs(pdf_dir, collection_name, chunk_size=1000, chunk_overlap=50):
     vectorstore.add_documents(all_chunks)
 
     print(f"Qdrant 업로드 완료! 컬렉션: {collection_name}")
+    
+    # if {업로드 완료}
+    process_qdrant_document(user_id, title)
 
     return "\n".join([chunk.page_content for chunk in all_chunks])
 

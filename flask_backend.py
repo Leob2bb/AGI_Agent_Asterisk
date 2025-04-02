@@ -197,7 +197,9 @@ def submit_dream_file(user_id):
         file_ext = os.path.splitext(filename)[1].lower()
         # 확장자가 .pdf일 경우만 실행
         if file_ext == '.pdf':
-            content = process_pdfs(UPLOAD_FOLDER, f"dream-{user_id}")
+            # batch_parse.py의 함수 실행행
+            content = process_pdfs(UPLOAD_FOLDER, user_id, title)
+
     else:
         return jsonify({'error': 'Empty filename'}), 400
 
