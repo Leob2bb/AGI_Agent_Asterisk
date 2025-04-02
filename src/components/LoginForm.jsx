@@ -19,38 +19,30 @@ function LoginForm({ setCurrentUser }) {
     }));
   };
 
+  // LoginForm.jsx의 handleSubmit 함수 수정
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 필드 검증
-    if (!formData.username || !formData.password) {
-      setError('아이디와 비밀번호를 모두 입력해주세요.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
       const result = await authService.login(formData.username, formData.password);
 
+      // 백엔드가 username을 직접 반환하지 않는 경우를 대비해 추가
+      const userData = {
+        ...result,
+        username: result.username || formData.username // 백엔드 응답에 username이 없으면 입력값 사용
+      };
+
       // 사용자 정보 저장
-      localStorage.setItem('user', JSON.stringify(result));
-      setCurrentUser(result);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setCurrentUser(userData);
 
       // 사용자 홈 페이지로 리다이렉션
-      navigate(`/user/${result.username}`);
+      navigate(`/user/${userData.username}`);
 
     } catch (err) {
-      // 백엔드 오류 코드에 따른 메시지 설정
-      if (err.status === 400) {
-        setError('아이디와 비밀번호를 모두 입력해주세요.');
-      } else if (err.status === 401) {
-        setError('아이디 또는 비밀번호가 올바르지 않습니다.');
-      } else {
-        setError('로그인에 실패했습니다. 다시 시도해주세요.');
-      }
-      console.error(err);
+      // 오류 처리 코드...
     } finally {
       setLoading(false);
     }

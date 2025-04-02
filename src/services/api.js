@@ -100,28 +100,25 @@ export const dreamService = {
   // src/services/api.js의 submitDreamFile 함수 수정
   submitDreamFile: async (dreamData, file, userId) => {
     try {
-      // 파일 타입에 따른 처리 (파일 내용 미리 읽기)
-      let fileContent = null;
+      // 모든 파일 타입에 대해 내용 읽기 시도
+      let content = null;
 
-      if (file.type === 'text/plain') {
-        // TXT 파일은 내용을 미리 읽어서 전송
-        fileContent = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.onerror = (e) => reject(e);
-          reader.readAsText(file);
-        });
-      }
+      // 텍스트, PDF 파일 등 내용 읽기
+      content = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsText(file);
+      }).catch(() => null); // 텍스트로 읽기 실패하면 null
 
-      // FormData 객체 생성
       const formData = new FormData();
       formData.append('title', dreamData.title);
       formData.append('date', dreamData.date);
       formData.append('file', file);
 
-      // 텍스트 파일의 경우 미리 읽은 내용도 함께 전송
-      if (fileContent) {
-        formData.append('fileContent', fileContent);
+      // 읽은 내용이 있다면 추가
+      if (content) {
+        formData.append('content', content);
       }
 
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/file`, {
