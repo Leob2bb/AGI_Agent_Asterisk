@@ -19,10 +19,7 @@ assert UPSTAGE_API_KEY, ".env에 UPSTAGE_API_KEY가 필요합니다."
 assert QDRANT_URL and QDRANT_API_KEY, "Qdrant 설정이 누락되었습니다."
 
 
-def process_pdfs(pdf_dir,
-                 collection_name="dream-papers",
-                 chunk_size=1000,
-                 chunk_overlap=50):
+def process_pdfs(pdf_dir, collection_name, chunk_size=1000, chunk_overlap=50):
     """
     PDF 폴더 내 모든 PDF를 처리하여 Qdrant에 업로드하고, content를 텍스트로 return하는 함수
 
@@ -87,7 +84,7 @@ def process_pdfs(pdf_dir,
         url=QDRANT_URL,
         api_key=QDRANT_API_KEY,
         collection_name=collection_name,
-        force_recreate=True  # 기존 컬렉션 삭제하고 새로 생성
+        force_recreate=False  # 기존 컬렉션에 추가됨
     )
     vectorstore.add_documents(all_chunks)
 
@@ -99,4 +96,4 @@ def process_pdfs(pdf_dir,
 # 사용 예시
 if __name__ == "__main__":
     PDF_DIR = r"./uploads"
-    process_pdfs(PDF_DIR)
+    process_pdfs(PDF_DIR, collection_name="test")

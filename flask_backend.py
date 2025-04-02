@@ -19,6 +19,9 @@ from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+
 # batch_parse.py 참조
 from batch_parse import process_pdfs
 
@@ -88,7 +91,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 @app.route('/')
 def home():
-    print(request.headers) 
+    # print(request.headers) 
     return "Bot is online"
 
 
@@ -169,16 +172,6 @@ def submit_dream_text(user_id):
 
 @app.route('/user/<string:user_id>/dream/file', methods=['POST'])
 def submit_dream_file(user_id):
-    # data = request.get_json()()
-    # if not data:
-    #     return jsonify({'error': 'No data received'}), 400
-    # print("requests data: ", data)
-    # print("requests header: ", str(request.headers))
-
-    # title = data.get('title')
-    # date = data.get('date')
-    # content = data.get('content')
-
     title = request.form.get('title')  # 일반 텍스트 데이터
     date = request.form.get('date')
     content = request.form.get('content')
@@ -202,7 +195,7 @@ def submit_dream_file(user_id):
         file_ext = os.path.splitext(filename)[1].lower()
         # 확장자가 .pdf일 경우만 실행
         if file_ext == '.pdf':
-            content = process_pdfs(UPLOAD_FOLDER)
+            content = process_pdfs(UPLOAD_FOLDER, f"dream-{user_id}")
     else:
         return jsonify({'error': 'Empty filename'}), 400
 
