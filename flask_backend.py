@@ -336,7 +336,7 @@ def get_dream(user_id, dream_id):
     #  4: 클라이언트가 기대하는 형식으로 응답 반환
     return jsonify({
         'id': dream.id,
-        'dreamId': dream.user_id,  # 프론트엔드가 기대하는 필드명
+        'dreamId': dream.dream_id,  # 프론트엔드가 기대하는 필드명
         'title': dream.title,
         'date': dream.date,
         'content': dream.content,
