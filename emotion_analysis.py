@@ -89,11 +89,10 @@ def get_embedding(text):
     mean_vector = [sum(dim) / len(vectors) for dim in zip(*vectors)]
     return mean_vector
 
-
-# ========== 핵심 실행 ==========
-def process_qdrant_document(user_id: str, title: str):
+# combine된 텍스트 만들기기
+def text_combining(user_id:str, title: str):
     source_collection = f"dream-{user_id}"
-    target_collection = f"dream-{user_id}-emotion"
+    # target_collection = f"dream-{user_id}-emotion"
     print(f"🔍 분석 대상 컬렉션: {source_collection}, 타이틀: {title}")
 
     # Qdrant 연결
@@ -124,11 +123,16 @@ def process_qdrant_document(user_id: str, title: str):
 
     # page_content 합치기
     combined_text = " ".join(p.payload.get("page_content", "") for p in points)
+    return combined_text
 
+# ========== 핵심 실행 ==========
+def process_qdrant_document(user_id: str, title: str):
+    # 텍스트 만들기기
+    combined_text = text_combining(user_id, title)
     # 감정 분석
     emotions = analyze_emotions(combined_text)
     # 의도/상징 해석
-    symbolic_result = analyze_symbols_and_intentions(combined_text)
+    # symbolic_result = analyze_symbols_and_intentions(combined_text)
     # 임베딩 생성
     embedding = get_embedding(combined_text)
 
@@ -138,29 +142,33 @@ def process_qdrant_document(user_id: str, title: str):
     
     # 감정 결과 합쳐서 Qdrant에 업로드
     # 감정 결과 저장용 컬렉션 없으면 생성
-    if target_collection not in collections:
-        qdrant_client.recreate_collection(
-            collection_name=target_collection,
-            vectors_config=VectorParams(size=len(embedding), distance=Distance.COSINE)
-        )
-        print(f"✅ 새로운 컬렉션 생성됨: {target_collection}")
+    # if target_collection not in collections:
+    #     qdrant_client.recreate_collection(
+    #         collection_name=target_collection,
+    #         vectors_config=VectorParams(size=len(embedding), distance=Distance.COSINE)
+    #     )
+    #     print(f"✅ 새로운 컬렉션 생성됨: {target_collection}")
+
+
 
     # 포인트 생성 및 업로드
-    point = PointStruct(
-        id=str(uuid.uuid4()),   # 문서를 잘라서 넣는데, 각 문서인지 구분하는 id
-        vector=embedding,   # 이게 꿈 일기 임베딩된 것
-        payload={
-            "user_id": user_id,
-            "title": title,
-            "emotions": emotions,
-            # 사건, 행동 관련 api 분석 결과
-            "symbols": symbolic_result["symbols"],
-            "intentions": symbolic_result["intentions"],
-        }
-    )
+    # point = PointStruct(
+    #     id=str(uuid.uuid4()),   # 문서를 잘라서 넣는데, 각 문서인지 구분하는 id
+    #     vector=embedding,   # 이게 꿈 일기 임베딩된 것
+    #     payload={
+    #         "user_id": user_id,
+    #         "title": title,
+    #         "emotions": emotions,
+    #         # 사건, 행동 관련 api 분석 결과
+    #         "symbols": symbolic_result["symbols"],
+    #         "intentions": symbolic_result["intentions"],
+    #     }
+    # )
 
-    qdrant_client.upsert(collection_name=target_collection, points=[point])
-    print(f"📌 '{target_collection}'에 감정 분석 결과 업로드 완료!")
+
+
+    # qdrant_client.upsert(collection_name=target_collection, points=[point])
+    # print(f"📌 '{target_collection}'에 감정 분석 결과 업로드 완료!")
     return emotions
 
 
@@ -168,4 +176,7 @@ def process_qdrant_document(user_id: str, title: str):
 if __name__ == "__main__":
     user_id = input("사용자 ID 입력: ").strip()
     title = input("분석할 문서 title 입력: ").strip()
-    process_qdrant_document(user_id, title)
+    # process_qdrant_document(user_id, title)
+    combined_text = text_combining(user_id, title)
+    emotions = analyze_emotions(combined_text)
+    print(f"emotions = ", emotions)

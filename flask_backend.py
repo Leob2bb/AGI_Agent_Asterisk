@@ -96,7 +96,7 @@ class Dream(db.Model):
     emotions = db.Column(db.Text) # json 형태
     # 행동 분석 결과 넣어버리기
 
-    def __init__(self, user_id, dream_id, title, date, content, type, emotions, file_path=None):
+    def __init__(self, user_id, dream_id, title, date, content, type, emotions=None, file_path=None):
         self.id = str(uuid.uuid4())
         self.user_id = user_id
         self.dream_id = dream_id
@@ -273,23 +273,30 @@ def submit_dream_file(user_id):
 
     # 확장자 및 MIME 타입 검사
     file_ext = os.path.splitext(filename)[1].lower()
-    if file_ext != '.pdf' or file.mimetype != 'application/pdf':
-        return jsonify({'error': 'Only PDF files are supported'}), 400
-
-    try:
-        app.logger.info('pdf 파일 처리중...')
-        content = process_pdfs(UPLOAD_FOLDER, user_id, title)
-        
-        # 감정 분석 기본값
-        emotions = json.dumps({"emotions": []})
-            
-    except Exception as e:
-        return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
+    # pdf
+    if file_ext == '.pdf':
+        try:
+            app.logger.info('pdf 파일 처리중...')
+            content = process_pdfs(UPLOAD_FOLDER, user_id, title)
+        except Exception as e:
+            return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
     
+    # png, jpg (OCR 처리하는 함수 받아 처리리)
+    elif file_ext in ['.png', '.jpg', '.jpeg']:
+        try:
+            app.logger.info('이미지 OCR 처리중... (아직 구현 안 됨)')
+            pass
+        except Exception as e:
+            return jsonify({'error': f'이미지 처리 중 오류 발생: {str(e)}'}), 500
+
+    else:
+        app.logger.info('지원되지 않는 파일 형식입니다.')
+        return jsonify({'error': '지원되지 않는 파일 형식입니다. (PDF 또는 이미지 파일만 가능)'}), 400
+
     dream_id = generate_dream_id(title, user_id, date)
 
     dream = Dream(user_id=user_id, title=filename, date=date, content=content,
-                  file_path=save_path, emotions=emotions, type='file', dream_id=dream_id)
+                  file_path=save_path, type='file', dream_id=dream_id)
     
     db.session.add(dream)
     db.session.commit()
