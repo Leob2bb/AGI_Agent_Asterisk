@@ -108,11 +108,11 @@ export const dreamService = {
   // 파일 업로드로 꿈 내용 제출
   submitDreamFile: async (dreamData, file, userId) => {
     try {
-      // FormData 객체만 생성하고 파일 내용 읽기 시도하지 않음
       const formData = new FormData();
       formData.append('title', dreamData.title);
       formData.append('date', dreamData.date);
       formData.append('file', file);
+      formData.append('user_id', userId);
 
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/file`, {
         method: 'POST',
