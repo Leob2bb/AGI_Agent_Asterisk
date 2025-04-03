@@ -35,18 +35,14 @@ function UserHomePage({ currentUser, setCurrentUser }) {
     try {
       console.log("파일 업로드 결과:", result);
 
-      // content가 있으면 꿈이 성공적으로 저장된 것
-      if (result && result.content) {
-        // dreamHistory를 업데이트하여 최신 꿈 목록을 가져옴
-        const response = await dreamService.getDreamHistory(userId);
-        if (response && response.dreams && response.dreams.length > 0) {
-          // 가장 최근 꿈의 ID를 사용
-          const latestDream = response.dreams[response.dreams.length - 1];
-          const dreamId = latestDream.id || latestDream.created_at;
-          if (dreamId) {
-            navigate(`/user/${userId}/dream/${dreamId}/analysis`);
-            return;
-          }
+      // result에서 직접 ID 확인
+      if (result) {
+        const dreamId = result.id || result.dream_id || result.dreamId || result.created_at;
+        if (dreamId) {
+          console.log("꿈 ID 확인됨:", dreamId);
+          // 분석 페이지로 직접 이동
+          navigate(`/user/${userId}/dream/${dreamId}/analysis`);
+          return;
         }
       }
       console.error('Invalid response:', result);
