@@ -28,6 +28,7 @@ def extract_symbols(text):
                 break
     return found
 
+# 의도, 목적
 def llm_intention_supplement(text):
     url = "https://api.upstage.ai/v1/solar/chat/completions"
     headers = {
@@ -86,6 +87,7 @@ def llm_intention_supplement(text):
         print(f"[LLM PARSE ERROR] {e}")
     return ["명확한 의도 분석 불가"]
 
+# 사물이랑 행동 분석
 def llm_symbolic_supplement(text):
     url = "https://api.upstage.ai/v1/solar/chat/completions"
     headers = {
@@ -144,6 +146,7 @@ def llm_symbolic_supplement(text):
         print(f"[LLM PARSE ERROR] {e}")
     return []
 
+# 위 함수 호출
 def analyze_symbols_and_intentions(text):
     symbols = extract_symbols(text)
 
