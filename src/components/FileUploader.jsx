@@ -81,7 +81,7 @@ function FileUploader({ onFileSelect, title, date }) {
         onDrop={handleDrop}
       >
         {!file ? (
-          <>
+          <div className="upload-container">
             <p>PDF 또는 TXT 파일을 드래그하거나 클릭하여 선택하세요</p>
             <input
               type="file"
@@ -97,7 +97,7 @@ function FileUploader({ onFileSelect, title, date }) {
             >
               파일 선택
             </button>
-          </>
+          </div>
         ) : (
           <div className="file-info">
             <p className="file-name">{file.name}</p>
