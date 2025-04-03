@@ -103,7 +103,8 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 @app.route('/')
 def home():
-    # print(request.headers)
+    # response.headers["Connection"] = "keep-alive"
+    # response.headers["Keep-Alive"] = "timeout=10, max=100"
     return "Bot is online"
 
 
