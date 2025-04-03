@@ -176,7 +176,10 @@ def login():
 @jwt_required()
 def submit_dream_text(user_id):
     current_user_id = get_jwt_identity()
-    if user_id != current_user_id:
+    
+    # 수정 1: 사용자 ID를 문자열로 변환하여 비교 (JWT에서는 숫자일 수 있음)
+    # 422 오류는 종종 ID 형식 불일치로 인해 발생함
+    if str(user_id) != str(current_user_id):
         return jsonify({'error': '접근 권한이 없습니다'}), 403
     
     data = request.get_json()
@@ -195,7 +198,9 @@ def submit_dream_text(user_id):
     if not title or not content or not date:
         return jsonify({'error': 'Title, date and content are required'}), 400
 
-    emotions = ""   # 임시
+    # 수정 2: 감정 분석을 위한 기본값을 JSON 형식으로 설정
+    # 이전 코드에서는 emotions 필드가 없거나 잘못된 형식이었을 가능성 있음
+    emotions = json.dumps({"emotions": []})
 
     dream = Dream(user_id=user_id,
                   title=title,
@@ -207,11 +212,15 @@ def submit_dream_text(user_id):
     db.session.add(dream)
     db.session.commit()
 
-    # emotions 반영해야 함
+    # 수정 3: 클라이언트가 기대하는 형식으로 응답 반환
+    # dreamId 필드를 추가하여 프론트엔드 코드와 호환성 유지
     return jsonify({
+        'id': dream.id,  # UUID 문자열
+        'dreamId': dream.id,  # 프론트엔드가 기대하는 필드명
         'title': dream.title,
         'date': dream.date,
-        'content': dream.content
+        'content': dream.content,
+        'created_at': dream.created_at.isoformat()  # ISO8601 형식으로 변환
     }), 201
 
 
@@ -272,29 +281,48 @@ def submit_dream_file(user_id):
 
 
 
-# 특정 사용자의 특정 꿈 정보를 조회하는 API
-@app.route('/user/<string:user_id>/dream/<created_at>', methods=['GET'])
+@app.route('/user/<string:user_id>/dream/<string:dream_id>', methods=['GET'])
 @jwt_required()
-def get_dream(user_id, created_at):
+def get_dream(user_id, dream_id):
     current_user_id = get_jwt_identity()
-    if user_id != current_user_id:
+    
+    # 수정 1: 사용자 ID를 문자열로 변환하여 비교 (JWT에서는 숫자로 반환될 수 있음)
+    if str(user_id) != str(current_user_id):
         return jsonify({'error': '접근 권한이 없습니다'}), 403
     
+    # 수정 2: dream_id가 UUID 형식인지 또는 날짜 형식인지 확인
+    # 이전 코드에서는 created_at만 처리하여 UUID 형식의 ID로 조회 시 422 오류 발생
     try:
-        created_at_dt = parser.parse(created_at)
-    except Exception:
-        return jsonify({'error': 'Invalid datetime format'}), 400
+        # UUID 형식으로 시도
+        uuid_obj = uuid.UUID(dream_id)
+        dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
+    except ValueError:
+        # 날짜 형식으로 시도
+        try:
+            # 수정 3: 날짜 파싱 방식 개선 및 시간 범위 쿼리 사용
+            # 이전에는 정확한 시간 일치만 확인하여 밀리초 차이로 인한 불일치 발생 가능
+            created_at_dt = parser.parse(dream_id)
+            dream = Dream.query.filter_by(user_id=user_id).filter(
+                Dream.created_at >= created_at_dt,
+                Dream.created_at < created_at_dt + datetime.timedelta(seconds=1)
+            ).first()
+        except Exception:
+            return jsonify({'error': 'Invalid dream ID format'}), 400
     
-    dream = Dream.query.filter_by(user_id=user_id, created_at=created_at).first()
+    if not dream:
+        return jsonify({'error': 'Dream not found'}), 404
     
-    if dream:
-        return jsonify({
-            'title': dream.title,
-            'date': dream.date,
-            'content': dream.content,
-        }), 200
-    
-    return jsonify({'error': 'Dream not found'}), 404
+    # 수정 4: 클라이언트가 기대하는 형식으로 응답 반환
+    # dreamId 필드를 추가하여 프론트엔드 코드와 호환성 유지
+    return jsonify({
+        'id': dream.id,
+        'dreamId': dream.id,  # 프론트엔드가 기대하는 필드명
+        'title': dream.title,
+        'date': dream.date,
+        'content': dream.content,
+        'created_at': dream.created_at.isoformat(),
+        'type': dream.type  # 추가 정보 제공
+    }), 200
 
 
 # @app.route('/user/<string:user_id>/dreams', methods=['GET'])
@@ -316,48 +344,88 @@ def get_dream(user_id, created_at):
 #     return jsonify({'dreams': results})
 
 
-@app.route('/user/<string:user_id>/dream/<created_at>/analysis', methods=['GET'])
+@app.route('/user/<string:user_id>/dream/<string:dream_id>/analysis', methods=['GET'])
 @jwt_required()
-def get_dream_analysis(user_id, created_at):
+def get_dream_analysis(user_id, dream_id):
     current_user_id = get_jwt_identity()
-    if user_id != current_user_id:
+    
+    # 수정 1: 사용자 ID를 문자열로 변환하여 비교
+    # JWT에서는 정수로 반환될 수 있어 문자열 비교 필요
+    if str(user_id) != str(current_user_id):
         return jsonify({'error': '접근 권한이 없습니다'}), 403
     
+    # 수정 2: dream_id 처리 로직 개선
+    # UUID와 created_at 두 가지 형식 모두 지원하도록 수정
     try:
-        created_at_dt = parser.parse(created_at)
-    except Exception:
-        return jsonify({'error': 'Invalid datetime format'}), 400
-
-    dream = Dream.query.filter_by(user_id=user_id, created_at=created_at_dt).first()
+        # UUID 형식으로 시도
+        uuid_obj = uuid.UUID(dream_id)
+        dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
+    except ValueError:
+        # 날짜 형식으로 시도
+        try:
+            created_at_dt = parser.parse(dream_id)
+            # 수정 3: 시간 범위 쿼리로 정확도 향상
+            # 밀리초 차이로 인한 불일치 방지
+            dream = Dream.query.filter_by(user_id=user_id).filter(
+                Dream.created_at >= created_at_dt,
+                Dream.created_at < created_at_dt + datetime.timedelta(seconds=1)
+            ).first()
+        except Exception:
+            return jsonify({'error': 'Invalid dream ID format'}), 400
+    
     if not dream:
         return jsonify({'error': 'Dream not found'}), 404
     
-    # emotion
-    agent_e = EmotionAgent(dream.emotions)
-    prompt_e = agent_e.create_llm_prompt(dream.content)
-    raw_analysis_emotion = agent_e.call_solar_llm(prompt_e)
+    try:
+        # 수정 4: 예외 처리 강화
+        # emotions 필드가 유효한 JSON인지 확인
+        emotions_data = dream.emotions
+        if not emotions_data:
+            emotions_data = json.dumps({"emotions": []})
+            
+        # 감정 분석
+        agent_e = EmotionAgent(emotions_data)
+        prompt_e = agent_e.create_llm_prompt(dream.content)
+        raw_analysis_emotion = agent_e.call_solar_llm(prompt_e)
+        
+        # 심볼 분석
+        # 수정 5: 내용이 없는 경우 기본값 처리
+        content = dream.content or ""
+        formatted_response_symbol = symbol_agent.analyze_symbols_and_intentions(content)
+        
+        # 프론트엔드 형식에 맞게 변환
+        formatted_response_emotion = {
+            "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
+            "emotions": raw_analysis_emotion.get("emotions", [])
+        }
+        
+        # 응답 합치기
+        combined_response = {**formatted_response_emotion, **formatted_response_symbol}
+        
+        # 수정 6: 응답에 dream ID 정보 추가하여 프론트엔드 호환성 유지
+        combined_response["dreamId"] = dream.id
+        combined_response["id"] = dream.id
+        
+        return jsonify(combined_response)
+    except Exception as e:
+        # 수정 7: 오류 로깅 강화 및 상세 오류 메시지 제공
+        print(f"분석 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()  # 자세한 오류 스택 출력
+        
+        return jsonify({
+            "error": "분석 과정에서 오류가 발생했습니다.",
+            "details": str(e)
+        }), 500
 
-    # symbol
-    
-    # 프론트엔드 형식에 맞게 변환
-    formatted_response_emotion = {
-        "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
-        "emotions": raw_analysis_emotion.get("emotions", [])
-    }
 
-    content = request.form.get('content')
-    formatted_response_symbol = symbol_agent.analyze_symbols_and_intentions(content)
-
-    print("심리 분석 결과는 다음과 같습니다!")
-    print(jsonify(**formatted_response_emotion, **formatted_response_symbol))
-    return jsonify(**formatted_response_emotion, **formatted_response_symbol)
-
-
-@app.route('/user/<user_id>/dream/<created_at>/chat', methods=['POST'])
+@app.route('/user/<string:user_id>/dream/<string:dream_id>/chat', methods=['POST'])
 @jwt_required()
-def process_chat_message(user_id, created_at):
+def process_chat_message(user_id, dream_id):
     current_user_id = get_jwt_identity()
-    if user_id != current_user_id:
+    
+    # 사용자 ID를 문자열로 변환하여 비교
+    if str(user_id) != str(current_user_id):
         return jsonify({'error': '접근 권한이 없습니다'}), 403
     
     data = request.get_json()
@@ -365,11 +433,38 @@ def process_chat_message(user_id, created_at):
         return jsonify({"error": "메시지가 제공되지 않았습니다"}), 400
     
     user_message = data['message']
-    # ai 답변 구현
-    ai_response = {
-        "response": f"당신의 메시지 '{user_message}'에 대한 응답입니다. 꿈에 관한 추가 질문이 있으신가요?"
-    }
-    return jsonify(ai_response)
+    
+    # dream_id가 UUID 형식인지 또는 날짜 형식인지 확인
+    try:
+        # UUID 형식으로 시도
+        uuid_obj = uuid.UUID(dream_id)
+        dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
+    except ValueError:
+        # 날짜 형식으로 시도
+        try:
+            created_at_dt = parser.parse(dream_id)
+            dream = Dream.query.filter_by(user_id=user_id).filter(
+                Dream.created_at >= created_at_dt,
+                Dream.created_at < created_at_dt + datetime.timedelta(seconds=1)
+            ).first()
+        except Exception:
+            return jsonify({'error': 'Invalid dream ID format'}), 400
+    
+    if not dream:
+        return jsonify({'error': 'Dream not found'}), 404
+    
+    try:
+        # AI 응답 구현 (임시)
+        ai_response = {
+            "response": f"당신의 메시지 '{user_message}'에 대한 응답입니다. 꿈에 관한 추가 질문이 있으신가요?"
+        }
+        return jsonify(ai_response)
+    except Exception as e:
+        print(f"채팅 처리 중 오류 발생: {str(e)}")
+        return jsonify({
+            "error": "채팅 처리 중 오류가 발생했습니다.",
+            "details": str(e)
+        }), 500
 
 if __name__ == '__main__':
     with app.app_context():
