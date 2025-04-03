@@ -83,6 +83,7 @@ class Dream(db.Model):
     __tablename__ = 'dreams'
     id = db.Column(db.String(50), primary_key=True)
     user_id = db.Column(db.String(50), nullable=False)
+    dream_id = db.Column(db.String(100), unique=True)
     title = db.Column(db.String(255))
     date = db.Column(db.String(50))
     content = db.Column(db.Text)
@@ -93,9 +94,10 @@ class Dream(db.Model):
     emotions = db.Column(db.Text) # json 형태
     # 행동 분석 결과 넣어버리기
 
-    def __init__(self, user_id, title, date, content, type, emotions, file_path=None):
+    def __init__(self, user_id, dream_id, title, date, content, type, emotions, file_path=None):
         self.id = str(uuid.uuid4())
         self.user_id = user_id
+        self.dream_id = dream_id
         self.title = title
         self.content = content
         self.date = date
@@ -171,6 +173,20 @@ def login():
         return jsonify({'error': 'Invalid credentials'}), 401
 
 
+def generate_dream_id(title, user_id, date):
+    # 특수 문자 제거, 소문자 변환, 공백을 언더스코어로 대체
+    clean_title = re.sub(r'[^\w\s]', '', title).lower().replace(' ', '_')
+    
+    # 날짜 형식 통일 (YYYYMMDD)
+    clean_date = date.replace('-', '').replace('/', '')
+    
+    # 최종 dream_id 생성 (유저ID_날짜_제목)
+    dream_id = f"{user_id}_{clean_date}_{clean_title}"
+    
+    # 길이 제한 (선택적)
+    return dream_id[:100]
+
+
 @app.route('/user/<string:user_id>/dream', methods=['POST'])
 # @jwt_required() 데코레이터 제거
 def submit_dream_text(user_id):
@@ -197,12 +213,15 @@ def submit_dream_text(user_id):
     # 이전 코드에서는 emotions 필드가 없거나 잘못된 형식이었을 가능성 있음
     emotions = json.dumps({"emotions": []})
 
+    dream_id = generate_dream_id(title, user_id, date)
+
     dream = Dream(user_id=user_id,
                   title=title,
                   date=date,
                   content=content,
                   emotions=emotions,
-                  type='text')
+                  type='text',
+                  dream_id=dream_id)
 
     db.session.add(dream)
     db.session.commit()
@@ -211,11 +230,11 @@ def submit_dream_text(user_id):
     # dreamId 필드를 추가하여 프론트엔드 코드와 호환성 유지
     return jsonify({
         'id': dream.id,  # UUID 문자열
-        'dreamId': dream.id,  # 프론트엔드가 기대하는 필드명
+        'dreamId': dream.dream_id,
         'title': dream.title,
         'date': dream.date,
         'content': dream.content,
-        'created_at': dream.created_at.isoformat()  # ISO8601 형식으로 변환
+        'created_at': dream.created_at.isoformat()
     }), 201
 
 
@@ -270,10 +289,11 @@ def submit_dream_file(user_id):
             
     except Exception as e:
         return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
+    
+    dream_id = generate_dream_id(title, user_id, date)
 
-    # DB 저장
     dream = Dream(user_id=user_id, title=filename, date=date, content=content,
-                  file_path=save_path, emotions=emotions, type='file')
+                  file_path=save_path, emotions=emotions, type='file', dream_id=dream_id)
     
     db.session.add(dream)
     db.session.commit()
@@ -281,7 +301,7 @@ def submit_dream_file(user_id):
     # 프론트엔드와 호환되는 응답 형식
     return jsonify({
         'id': dream.id,
-        'dreamId': dream.id,  # 프론트엔드가 기대하는 필드명
+        'dreamId': dream.dream_id,  # 프론트엔드가 기대하는 필드명
         'title': dream.title,
         'date': dream.date,
         'content': dream.content,
@@ -296,8 +316,6 @@ def submit_dream_file(user_id):
 def get_dream(user_id, dream_id):
 
     app.logger.info(f"Get dream request - User ID: {user_id}, Dream ID: {dream_id}")
-
-    # dream_id가 UUID 형식인지 또는 날짜 형식인지 확인
     try:
         # URL에 안전한 형태로 디코딩 및 기본 검증
         dream_id = urllib.parse.unquote(dream_id)
@@ -305,16 +323,6 @@ def get_dream(user_id, dream_id):
         uuid_obj = uuid.UUID(dream_id)
         app.logger.info(f"Parsed UUID: {uuid_obj}")
         dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
-    # except ValueError:
-    #     # 날짜 형식으로 시도
-    #     try:
-    #         # 3: 날짜 파싱 방식 개선 및 시간 범위 쿼리 사용
-    #         # 이전에는 정확한 시간 일치만 확인하여 밀리초 차이로 인한 불일치 발생 가능
-    #         created_at_dt = parser.parse(dream_id)
-    #         dream = Dream.query.filter_by(user_id=user_id).filter(
-    #             Dream.created_at >= created_at_dt,
-    #             Dream.created_at < created_at_dt + datetime.timedelta(seconds=1)
-    #         ).first()
     except Exception:
         return jsonify({'error': 'Invalid dream ID format'}), 400
     
@@ -425,27 +433,15 @@ def get_dream_analysis(user_id, dream_id):
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/chat', methods=['POST'])
 def process_chat_message(user_id, dream_id):
-    # JWT 검증 코드 제거
-    
     data = request.get_json()
     if not data or 'message' not in data:
         return jsonify({"error": "메시지가 제공되지 않았습니다"}), 400
     
     user_message = data['message']
-    
-    # dream_id가 UUID 형식인지 또는 날짜 형식인지 확인
     try:
         # UUID 형식으로 시도
         uuid_obj = uuid.UUID(dream_id)
         dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
-    # except ValueError:
-    #     # 날짜 형식으로 시도
-    #     try:
-    #         created_at_dt = parser.parse(dream_id)
-    #         dream = Dream.query.filter_by(user_id=user_id).filter(
-    #             Dream.created_at >= created_at_dt,
-    #             Dream.created_at < created_at_dt + datetime.timedelta(seconds=1)
-    #         ).first()
     except Exception:
         return jsonify({'error': 'Invalid dream ID format'}), 400
     
