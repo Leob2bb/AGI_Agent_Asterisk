@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import FileUploader from './FileUploader';
 import { dreamService } from '../services/api';
+import { useNavigate } from 'react-router-dom'; // Assuming React Router is used
 
 function DreamEntryForm({ onSuccess, userId }) {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ function DreamEntryForm({ onSuccess, userId }) {
   const [isManualEntry, setIsManualEntry] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate(); // Added useNavigate hook
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -65,8 +67,12 @@ function DreamEntryForm({ onSuccess, userId }) {
       setDreamFile(null);
       setIsManualEntry(true);
 
-      // 성공 콜백 호출
-      onSuccess(result);
+      // 성공 콜백 호출 및 페이지 이동
+      onSuccess(result); // Assuming onSuccess now handles navigation with dreamId
+      if (result && result.dreamId) { // Check for dreamId in the response
+        navigate(`/dream-analysis/${result.dreamId}`);
+      }
+
 
     } catch (err) {
       console.error('API Error:', err);
