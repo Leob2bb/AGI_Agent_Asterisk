@@ -26,7 +26,7 @@ class EmotionAgent:
     def analyze_emotions_agent(self):
         # 부정 감정 점수가 높은 항목 개수 계산
         negative_count = sum(
-            1 for e in self.emotions if e["label"] in negative_emotions and e["score"] > 0.5
+            1 for e in self.emotions if e["label"] in negative_emotions and e["score"] > 0.3
         )
 
         if negative_count >= 2:
@@ -100,7 +100,11 @@ class EmotionAgent:
             response.raise_for_status()
             
             # 이거 형식 맞춰 바꿔야 함
-            analysis_text = response.json()["choices"][0]["message"]["content"]
+            # analysis_text = response.json()["choices"][0]["message"]["content"]
+            data = response.json()
+            analysis_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            if not analysis_text:
+                raise ValueError("LLM 응답에 분석 내용이 없습니다.")
 
              # 감정 지표 딕셔너리로 변환
             emotion_dict = {

@@ -411,7 +411,7 @@ def get_dream_analysis(user_id, dream_id):
             except Exception as e:
                 app.logger.error(f"emotions_data JSON 파싱 실패: {e}")
                 emotions_data = {}
-                
+
         # 감정 분석
         app.logger.info("감정 분석 시작!")
 
@@ -428,10 +428,11 @@ def get_dream_analysis(user_id, dream_id):
         prompt_e = agent_e.create_llm_prompt(dream.content)
         app.logger.info(f"감정 에이전트 실행")
         raw_analysis_emotion = agent_e.call_solar_llm(prompt_e)
+        app.logger.info(f"raw_analysis_emotion = {raw_analysis_emotion}")
         
         # 심볼 분석, 내용이 없는 경우 기본값 처리
         content = dream.content or ""
-        app.logger.info(f"content = {content}")
+        # app.logger.info(f"content = {content}")
 
         # "symbols", "intentions"
         formatted_response_symbol = analyze_symbols_and_intentions(content)
@@ -444,7 +445,7 @@ def get_dream_analysis(user_id, dream_id):
         
         # 분석 방법 2
         formatted_response_emotion = {
-            "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
+            "analysis-emotions": raw_analysis_emotion.get("analysis-emotions", "분석 결과를 불러올 수 없습니다."),
             "emotions": raw_analysis_emotion.get("emotions", [])
         }
         app.logger.info(f"response_emotions = {formatted_response_emotion}")
