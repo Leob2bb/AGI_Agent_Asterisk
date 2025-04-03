@@ -35,18 +35,16 @@ function UserHomePage({ currentUser, setCurrentUser }) {
     try {
       console.log("파일 업로드 결과:", result);
 
-      // dreamId 추출 (백엔드 응답에 따라 달라질 수 있음)
-      // 꿈 기록 갱신
-      const historyResponse = await dreamService.getDreamHistory(userId);
-      setDreamHistory(historyResponse.dreams || []);
-
       // 새로 생성된 꿈의 분석 페이지로 이동
       const resultDreamId = result.dreamId || result.created_at;
       if (resultDreamId) {
+        // 즉시 분석 페이지로 이동
         navigate(`/user/${userId}/dream/${resultDreamId}`);
+      } else {
+        console.error('No dreamId in response:', result);
       }
     } catch (error) {
-      console.error('Failed to update dream history:', error);
+      console.error('Failed to handle dream submission:', error);
     }
   };
 
