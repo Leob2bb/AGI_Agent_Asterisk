@@ -364,16 +364,6 @@ def get_dream_analysis(user_id, dream_id):
         # UUID 형식으로 시도
         uuid_obj = uuid.UUID(dream_id)
         dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
-    # except ValueError:
-    #     # 날짜 형식으로 시도
-    #     try:
-    #         created_at_dt = parser.parse(dream_id)
-    #         # 시간 범위 쿼리로 정확도 향상
-    #         # 밀리초 차이로 인한 불일치 방지
-    #         dream = Dream.query.filter_by(user_id=user_id).filter(
-    #             Dream.created_at >= created_at_dt,
-    #             Dream.created_at < created_at_dt + datetime.timedelta(seconds=1)
-    #         ).first()
     except Exception:
         return jsonify({'error': 'Invalid dream ID format'}), 400
     

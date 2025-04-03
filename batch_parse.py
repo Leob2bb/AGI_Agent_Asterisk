@@ -21,11 +21,9 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 assert UPSTAGE_API_KEY, ".env에 UPSTAGE_API_KEY가 필요합니다."
 assert QDRANT_URL and QDRANT_API_KEY, "Qdrant 설정이 누락되었습니다."
 
-
 def process_pdfs(pdf_dir, user_id, title, chunk_size=1000, chunk_overlap=50):
     """
     PDF 폴더 내 모든 PDF를 처리하여 Qdrant에 업로드하고, content를 텍스트로 return하는 함수
-
     Args:
         pdf_dir (str): PDF 파일이 들어있는 폴더 경로
         user_id: 사용자 id
@@ -40,8 +38,7 @@ def process_pdfs(pdf_dir, user_id, title, chunk_size=1000, chunk_overlap=50):
                                         model="embedding-passage")
 
     # 텍스트 분할기
-    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
-                                              chunk_overlap=chunk_overlap)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 
     all_chunks = []
 
@@ -90,7 +87,6 @@ def process_pdfs(pdf_dir, user_id, title, chunk_size=1000, chunk_overlap=50):
         collection_name=collection_name,
         force_recreate=False  # 기존 컬렉션에 추가됨
     )
-    vectorstore.add_documents(all_chunks)
 
     print(f"Qdrant 업로드 완료! 컬렉션: {collection_name}")
 
@@ -100,4 +96,4 @@ def process_pdfs(pdf_dir, user_id, title, chunk_size=1000, chunk_overlap=50):
 # 사용 예시
 if __name__ == "__main__":
     PDF_DIR = r"./uploads"
-    process_pdfs(PDF_DIR, collection_name="test")
+    process_pdfs(PDF_DIR, "test", "ex-title")
