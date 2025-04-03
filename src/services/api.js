@@ -20,19 +20,10 @@ export const authService = {
         throw error;
       }
 
-      // 토큰이 있는지 확실히 확인
-      if (!result.token) {
-        throw new Error('No token received from server');
-      }
-
-      // 토큰을 localStorage에 저장
-      localStorage.setItem('token', result.token);
-
       // 사용자 정보 저장
       const userData = {
-        id: result.id,
-        username: result.username || username,
-        token: result.token
+        id: result.id || username, // id가 없으면 username을 id로 사용
+        username: result.username || username
       };
       localStorage.setItem('user', JSON.stringify(userData));
 
@@ -169,7 +160,6 @@ export const dreamService = {
   // 특정 꿈 정보 가져오기 - created_at을 사용하도록 수정
   getDream: async (userId, dreamIdOrCreatedAt) => {
     try {
-      const token = localStorage.getItem('token');
       // created_at 형식인지 확인 (ISO8601 형식이면 created_at으로 간주)
       const isCreatedAt = typeof dreamIdOrCreatedAt === 'string' && 
                           dreamIdOrCreatedAt.includes('T') && 
@@ -183,8 +173,7 @@ export const dreamService = {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Content-Type': 'application/json'
         }
       });
       if (!response.ok) {
