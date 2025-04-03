@@ -9,21 +9,7 @@ function UserHomePage({ currentUser, setCurrentUser }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // 사용자의 꿈 기록 가져오기
-    const fetchDreamHistory = async () => {
-      try {
-        const response = await dreamService.getDreamHistory(userId);
-        // response.dreams 에서 배열을 가져옵니다
-        setDreamHistory(response.dreams || []);
-      } catch (error) {
-        console.error('Failed to load dream history:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDreamHistory();
-  }, [userId]);
+  
 
   const handleLogout = () => {
     authService.logout();

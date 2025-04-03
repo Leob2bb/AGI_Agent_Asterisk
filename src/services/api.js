@@ -133,31 +133,6 @@ export const dreamService = {
     }
   },
 
-  // 사용자의 꿈 기록 가져오기
-  getDreamHistory: async (userId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dreams`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to get dream history');
-      }
-      const data = await response.json();
-      // 'dreams' 키 아래의 배열을 반환하고, 각 꿈 항목에 created_at을 id로 사용
-      const dreams = (data.dreams || []).map(dream => ({
-        ...dream,
-        id: dream.id || dream.created_at // id가 없으면 created_at을 id로 사용
-      }));
-      return dreams;
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  },
-
   // 특정 꿈 정보 가져오기 - created_at을 사용하도록 수정
   getDream: async (userId, dreamIdOrCreatedAt) => {
     try {
