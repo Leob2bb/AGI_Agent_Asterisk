@@ -11,9 +11,9 @@ export const authService = {
         },
         body: JSON.stringify({ username, password })
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok) {
         const error = new Error(result.message || 'Login failed');
         error.status = response.status;
@@ -27,7 +27,7 @@ export const authService = {
 
       // 토큰을 localStorage에 저장
       localStorage.setItem('token', result.token);
-      
+
       // 사용자 정보 저장
       const userData = {
         id: result.id,
@@ -146,16 +146,10 @@ export const dreamService = {
   // 사용자의 꿈 기록 가져오기
   getDreamHistory: async (userId) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
-      
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dreams`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         }
       });
       if (!response.ok) {
