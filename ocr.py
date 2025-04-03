@@ -14,16 +14,16 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
  
  # ------------------------------------
 # Document OCR
-filename = "YOUR_FILE_NAME"
+# filename = "YOUR_FILE_NAME"
  
-url = "https://api.upstage.ai/v1/document-digitization"
-headers = {"Authorization": f"Bearer {UPSTAGE_API_KEY}"}
+# url = "https://api.upstage.ai/v1/document-digitization"
+# headers = {"Authorization": f"Bearer {UPSTAGE_API_KEY}"}
  
-files = {"document": open(filename, "rb")}
-data = {"model": "ocr"}
-response = requests.post(url, headers=headers, files=files, data=data)
+# files = {"document": open(filename, "rb")}
+# data = {"model": "ocr"}
+# response = requests.post(url, headers=headers, files=files, data=data)
  
-print(response.json())
+# print(response.json())
 
 
  # ------------------------------------
@@ -41,28 +41,25 @@ def encode_img_to_base64(img_path):
         base64_data = base64.b64encode(img_bytes).decode('utf-8')
         return base64_data
  
-# Read the image file and encode it to base64
-img_path = "./bank_statement.png"
-base64_data = encode_img_to_base64(img_path)
- 
 # Schema generation request
-schema_response = client.chat.completions.create(
-    model="information-extract",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/png;base64,{base64_data}"}
-                }
-            ]
-        }
-    ],
-)
+def schema_generation_auto(base64_data):
+    schema_response = client.chat.completions.create(
+        model="information-extract",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{base64_data}"}
+                    }
+                ]
+            }
+        ],
+    )
 
-# 자동 생성된 schema -> 보고 수정 필요
-schema = json.loads(schema_response.choices[0].message.content)
+    # 자동 생성된 schema -> 보고 수정 필요
+    schema = json.loads(schema_response.choices[0].message.content)
 
 # Use clear key names and descriptions: Providing clear and descriptive key names and descriptions significantly improves the accuracy of data extraction.
 # Avoid vauge or overly generic key names: Use specific terms where applicable, and include concise descriptions that explain the purpose and expected values of each key.
@@ -70,7 +67,8 @@ schema = json.loads(schema_response.choices[0].message.content)
 # ------------------------------------
 # 자동 schema를 사용해 IE
 # Information Extraction Request using the generated schema
-extraction_response = client.chat.completions.create(
+def information_extraction(base64_data):
+    extraction_response = client.chat.completions.create(
     model="information-extract",
     messages=[
         {
@@ -99,6 +97,11 @@ extraction_response = client.chat.completions.create(
             }
         }
     }
-)
- 
-print(extraction_response.choices[0].message.content)
+    )
+
+    print(extraction_response.choices[0].message.content)
+
+if __name__ == "__main__":
+    img_path = "D:/Yonsei_2025/Side_Project/agi_agent_hackathon_3/diary_template/diary_pink.pdf"
+    base64_data = encode_img_to_base64(img_path)
+    schema_generation_auto(base64_data)
