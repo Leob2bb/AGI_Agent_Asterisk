@@ -20,12 +20,15 @@ export const authService = {
         throw error;
       }
 
-      // 사용자 정보 저장
+      // 사용자 정보와 토큰 저장
       const userData = {
         id: result.id || username, // id가 없으면 username을 id로 사용
         username: result.username || username
       };
       localStorage.setItem('user', JSON.stringify(userData));
+      if (result.token) {
+        localStorage.setItem('token', result.token);
+      }
 
       return userData;
     } catch (error) {
