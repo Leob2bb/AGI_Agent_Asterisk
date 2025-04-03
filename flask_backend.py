@@ -54,6 +54,18 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
 jwt = JWTManager(app)
 
+@jwt.invalid_token_loader
+def invalid_token_callback(error):
+    return jsonify({"error": "잘못된 토큰입니다."}), 422
+
+@jwt.unauthorized_loader
+def unauthorized_callback(error):
+    return jsonify({"error": "인증 토큰이 없습니다."}), 401
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({"error": "토큰이 만료되었습니다."}), 401
+
 
 # User 모델 정의
 class User(db.Model):
