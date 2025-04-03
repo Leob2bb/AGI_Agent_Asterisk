@@ -20,6 +20,18 @@ class EmotionAgent:
                 print(f"[EmotionAgent] JSON parsing failed: {e}")
                 emotion_scores = {}
 
+        # 구조가 {"emotions": [{"label": ..., "score": ...}]} 형태인 경우 변환
+        if isinstance(emotion_scores, dict) and "emotions" in emotion_scores:
+            try:
+                emotion_scores = {
+                    item["label"]: item["score"]
+                    for item in emotion_scores["emotions"]
+                    if "label" in item and "score" in item
+                }
+            except Exception as e:
+                print(f"[EmotionAgent] Failed to extract from nested emotions: {e}")
+                emotion_scores = {}
+
         self.emotions = [{"label": label, "score": score} for label, score in emotion_scores.items()]
         self.dream_summary = dream_summary
 
