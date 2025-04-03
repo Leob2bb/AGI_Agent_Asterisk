@@ -40,8 +40,8 @@ function App() {
               element={!currentUser ? <Navigate to="/login" /> : <UserHomePage currentUser={currentUser} setCurrentUser={setCurrentUser} />} 
             />
             <Route 
-              path="/user/:userId/dream/:dreamId" 
-              element={!currentUser ? <Navigate to="/login" /> : <AnalysisPage />} 
+              path="/dream-analysis/:dreamId" 
+              element={!currentUser ? <Navigate to="/login" /> : <AnalysisPage currentUser={currentUser} />} 
             />
             <Route 
               path="/" 
