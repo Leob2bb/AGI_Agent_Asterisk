@@ -41,6 +41,17 @@ assert QDRANT_URL and QDRANT_API_KEY, "Qdrant 설정이 누락되었습니다."
 app = Flask(__name__)
 CORS(app)
 
+# 로깅 설정 추가
+import logging
+from logging.handlers import RotatingFileHandler
+handler = RotatingFileHandler('dream_app.log', maxBytes=10000, backupCount=3)
+handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+handler.setLevel(logging.INFO)
+app.logger.addHandler(handler)
+app.logger.setLevel(logging.INFO)
+
 # SQLite 데이터베이스 설정
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dreams.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -110,8 +121,10 @@ def register():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data received'}), 400
-    print("requests data: ", data)
-    print("회원가입")
+    
+    app.logger.info(f"Register request data: {data}")
+    app.logger.info("회원가입 요청")
+
     # print("requests header: ", str(request.headers))
 
     username = data.get('username')
@@ -136,9 +149,9 @@ def login():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data received'}), 400
-    print("requests data: ", data)
-    print("로그인")
-    # print("requests header: ", str(request.headers))
+    
+    app.logger.info(f"Login request data: {data}")
+    app.logger.info("로그인 요청")
 
     username = data.get('username')
     password = data.get('password')
@@ -165,8 +178,9 @@ def submit_dream_text(user_id):
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data received'}), 400
-    print("requests data: ", data)
-    print(f"사용자 id = {user_id}")
+    
+    app.logger.info(f"Submit dream text request data: {data}")
+    app.logger.info(f"사용자 id = {user_id}")
 
     # print("requests header: ", str(request.headers))
 
@@ -210,8 +224,8 @@ def submit_dream_file(user_id):
     # JWT 검증 코드 제거
 
     # 요청 데이터 확인
-    print("🔹 Request form data:", request.form)
-    print("🔹 Request files:", request.files)
+    app.logger.info(f"Request form data: {request.form}")
+    app.logger.info(f"Request files: {request.files}")
 
     # 필수 데이터 받기
     title = request.form.get('title')
@@ -241,7 +255,7 @@ def submit_dream_file(user_id):
         return jsonify({'error': 'Only PDF files are supported'}), 400
 
     try:
-        print('pdf 파일 처리중...')
+        app.logger.info('pdf 파일 처리중...')
         content = process_pdfs(UPLOAD_FOLDER, user_id, title)
         
         # 감정 분석 기본값
@@ -251,7 +265,7 @@ def submit_dream_file(user_id):
             # 실제 감정 분석 시도
             emotions = process_qdrant_document(user_id, title)
         except Exception as e:
-            print(f"감정 분석 중 오류 발생: {str(e)}")
+            app.logger.error(f"감정 분석 중 오류 발생: {str(e)}")
             
     except Exception as e:
         return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
@@ -395,9 +409,9 @@ def get_dream_analysis(user_id, dream_id):
         return jsonify(combined_response)
     except Exception as e:
         #  7: 오류 로깅 강화 및 상세 오류 메시지 제공
-        print(f"분석 중 오류 발생: {str(e)}")
+        app.logger.error(f"분석 중 오류 발생: {str(e)}")
         import traceback
-        traceback.print_exc()  # 자세한 오류 스택 출력
+        app.logger.error(traceback.format_exc())   # 자세한 오류 스택 출력
         
         return jsonify({
             "error": "분석 과정에서 오류가 발생했습니다.",
@@ -442,7 +456,7 @@ def process_chat_message(user_id, dream_id):
         }
         return jsonify(ai_response)
     except Exception as e:
-        print(f"채팅 처리 중 오류 발생: {str(e)}")
+        app.logger.error(f"채팅 처리 중 오류 발생: {str(e)}")
         return jsonify({
             "error": "채팅 처리 중 오류가 발생했습니다.",
             "details": str(e)
@@ -452,4 +466,5 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # 테이블 없으면 생성
     port = int(os.environ.get("PORT", 5000))
+    app.logger.info(f"Starting server on port {port}")
     app.run(host="0.0.0.0", port=port)
