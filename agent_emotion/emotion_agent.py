@@ -98,7 +98,13 @@ class EmotionAgent:
 
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
+
+            from flask import current_app
+            current_app.logger.info("Solar 응답: %s", json.dumps(response.json(), ensure_ascii=False))
+            print("[📩 Solar API 응답]:")
+            print(json.dumps(response.json(), indent=2, ensure_ascii=False))
             
+
             # 이거 형식 맞춰 바꿔야 함
             # analysis_text = response.json()["choices"][0]["message"]["content"]
             data = response.json()
@@ -106,11 +112,13 @@ class EmotionAgent:
             if not analysis_text:
                 raise ValueError("LLM 응답에 분석 내용이 없습니다.")
 
+
              # 감정 지표 딕셔너리로 변환
             emotion_dict = {
                 e["label"]: e["score"]
                 for e in self.emotions
             }
+            current_app.logger.info(f"emotion_dict = {emotion_dict}")
 
             return {
                 "analysis-emotions": analysis_text,
