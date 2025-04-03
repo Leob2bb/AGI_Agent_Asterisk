@@ -122,21 +122,10 @@ export const dreamService = {
         body: formData
       });
 
-      // 테스트를 위한 모의 응답 데이터
-      return {
-        dreamId: new Date().toISOString(),
-        title: dreamData.title,
-        date: dreamData.date,
-        content: "늦은 시간까지 과방에서 민규 형, 태빈이와 함께 해커톤을 위한 프로젝트를 진행하고 있었다. 코드를 새로 짤 때마다 오류가 많이 발생해서 너무 짜증났다. 그렇게 짜증내고 있었는데 갑자기 노트북 화면에서 행렬 요소들이 튀어나와서 나를 덮쳤다. 너무 놀라서 당황했고 그러다 깜짝 놀라서 꿈에서 깼다",
-        initialAnalysis: "이 꿈은 프로젝트 작업 중의 스트레스와 압박감이 표현된 것으로 보입니다. 노트북 화면에서 행렬 요소들이 튀어나오는 장면은 코딩 문제가 압도적으로 느껴지는 감정을 상징합니다. 팀원들과 함께 있는 상황은 협업 과정에서의 책임감과 부담감을 나타냅니다.",
-        emotions: ["스트레스", "불안", "압박감", "당혹감"],
-        symbols: [
-          { name: "노트북", meaning: "일과 책임" },
-          { name: "행렬", meaning: "복잡한 문제" },
-          { name: "과방", meaning: "작업 공간" }
-        ],
-        created_at: new Date().toISOString()
-      };
+      if (!response.ok) {
+        throw new Error('Failed to submit dream file');
+      }
+      return await response.json();
     } catch (error) {
       console.error('API Error:', error);
       throw error;
