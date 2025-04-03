@@ -188,6 +188,18 @@ def generate_dream_id(title, date):
     # 길이 제한 (선택적)
     return dream_id[:100]
 
+def generate_unique_dream_id(user_id, title, date):
+    base_id = generate_dream_id(title, date)
+    candidate_id = base_id
+    suffix = 1
+
+    while Dream.query.filter_by(user_id=user_id, dream_id=candidate_id).first():
+        candidate_id = f"{base_id}_{suffix}"
+        suffix += 1
+
+    return candidate_id
+
+
 
 @app.route('/user/<string:user_id>/dream', methods=['POST'])
 # @jwt_required() 데코레이터 제거
@@ -215,7 +227,9 @@ def submit_dream_text(user_id):
     # 이전 코드에서는 emotions 필드가 없거나 잘못된 형식이었을 가능성 있음
     emotions = json.dumps({"emotions": []})
 
-    dream_id = generate_dream_id(title, date)
+    # dream_id = generate_dream_id(title, date)
+    dream_id = generate_unique_dream_id(user_id, title, date)
+
     app.logger.info(f'dream_id = {dream_id}, user_id = {user_id}')
     dream = Dream(user_id=user_id,
                   title=title,
@@ -294,7 +308,9 @@ def submit_dream_file(user_id):
         app.logger.info('지원되지 않는 파일 형식입니다.')
         return jsonify({'error': '지원되지 않는 파일 형식입니다. (PDF 또는 이미지 파일만 가능)'}), 400
 
-    dream_id = generate_dream_id(title, date)
+    # dream_id = generate_dream_id(title, date)
+    dream_id = generate_unique_dream_id(user_id, title, date)
+
 
     dream = Dream(user_id=user_id, title=filename, date=date, content=content,
                   file_path=save_path, type='file', dream_id=dream_id)
@@ -321,14 +337,15 @@ def get_dream(user_id, dream_id):
 
     app.logger.info(f"Get dream request - User ID: {user_id}, Dream ID: {dream_id}")
     try:
-        # URL에 안전한 형태로 디코딩 및 기본 검증
-        dream_id = urllib.parse.unquote(dream_id)
-        # UUID 형식으로 시도
+        # 먼저 UUID로 시도
         uuid_obj = uuid.UUID(dream_id)
         app.logger.info(f"Parsed UUID: {uuid_obj}")
         dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
-    except Exception:
-        return jsonify({'error': 'Invalid dream ID format'}), 400
+    except ValueError:
+        # UUID가 아니면 dream_id로 조회
+        app.logger.warning("dream_id가 UUID 형식이 아님. dream_id 필드로 조회 시도.")
+        dream = Dream.query.filter_by(user_id=user_id, dream_id=dream_id).first()
+
     
     if not dream:
         app.logger.warning(f"Dream not found for user {user_id} with ID {dream_id}")
@@ -365,18 +382,19 @@ def get_dream(user_id, dream_id):
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/analysis', methods=['GET'])
 def get_dream_analysis(user_id, dream_id):
-    # dream_id 처리 로직 개선
-    # UUID와 created_at 두 가지 형식 모두 지원하도록 수정
     app.logger.info(f"Get dream request - User ID: {user_id}, Dream ID: {dream_id}")
     try:
-        # UUID 형식으로 시도
+        # UUID로 먼저 시도
         uuid_obj = uuid.UUID(dream_id)
         dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
-    except Exception:
-        return jsonify({'error': 'Invalid dream ID format'}), 400
-    
+    except ValueError:
+        # UUID가 아니면 dream_id 필드로 조회
+        app.logger.warning("dream_id가 UUID 형식이 아님. dream_id 필드로 조회 시도.")
+        dream = Dream.query.filter_by(user_id=user_id, dream_id=dream_id).first()
+
     if not dream:
         return jsonify({'error': 'Dream not found'}), 404
+
     
     try:
         # emotions 필드가 유효한 JSON인지 확인
@@ -445,17 +463,18 @@ def process_chat_message(user_id, dream_id):
     data = request.get_json()
     if not data or 'message' not in data:
         return jsonify({"error": "메시지가 제공되지 않았습니다"}), 400
-    
+
     user_message = data['message']
     try:
-        # UUID 형식으로 시도
         uuid_obj = uuid.UUID(dream_id)
         dream = Dream.query.filter_by(user_id=user_id, id=str(uuid_obj)).first()
-    except Exception:
-        return jsonify({'error': 'Invalid dream ID format'}), 400
-    
+    except ValueError:
+        app.logger.warning("dream_id가 UUID 형식이 아님. dream_id 필드로 조회 시도.")
+        dream = Dream.query.filter_by(user_id=user_id, dream_id=dream_id).first()
+
     if not dream:
         return jsonify({'error': 'Dream not found'}), 404
+
     
     try:
         # AI 응답 구현 (임시)
