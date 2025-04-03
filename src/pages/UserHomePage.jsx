@@ -36,14 +36,11 @@ function UserHomePage({ currentUser, setCurrentUser }) {
       console.log("파일 업로드 결과:", result);
 
       // dreamId 추출 (백엔드 응답에 따라 달라질 수 있음)
-      const dreamId = result.id || result.created_at;
-
       // 꿈 기록 갱신
       const historyResponse = await dreamService.getDreamHistory(userId);
       setDreamHistory(historyResponse.dreams || []);
 
       // 새로 생성된 꿈의 분석 페이지로 이동
-      // 파일 업로드 결과에서 dreamId 추출
       const resultDreamId = result.dreamId || result.created_at;
       if (resultDreamId) {
         navigate(`/user/${userId}/dream/${resultDreamId}`);
