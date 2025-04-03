@@ -253,7 +253,7 @@ def submit_dream_file(user_id):
     title = request.form.get('title')
     date = request.form.get('date')
     content = request.form.get('content', "")  # None이면 빈 문자열 처리
-    username = request.form()
+    # username = request.form()
 
     # 파일 데이터 검증
     if 'file' not in request.files:
