@@ -35,15 +35,21 @@ function UserHomePage({ currentUser, setCurrentUser }) {
     try {
       console.log("파일 업로드 결과:", result);
 
-      // 백엔드에서 반환된 id나 created_at을 사용
-      const dreamId = result.id || result.created_at;
-      if (dreamId) {
-        // 바로 분석 페이지로 이동
-        navigate(`/user/${userId}/dream/${dreamId}/analysis`);
-      } else {
-        console.error('No valid ID in response:', result);
-        console.log('Full response:', result);
+      // content가 있으면 꿈이 성공적으로 저장된 것
+      if (result && result.content) {
+        // dreamHistory를 업데이트하여 최신 꿈 목록을 가져옴
+        const response = await dreamService.getDreamHistory(userId);
+        if (response && response.dreams && response.dreams.length > 0) {
+          // 가장 최근 꿈의 ID를 사용
+          const latestDream = response.dreams[response.dreams.length - 1];
+          const dreamId = latestDream.id || latestDream.created_at;
+          if (dreamId) {
+            navigate(`/user/${userId}/dream/${dreamId}/analysis`);
+            return;
+          }
+        }
       }
+      console.error('Invalid response:', result);
     } catch (error) {
       console.error('Failed to handle dream submission:', error);
     }
