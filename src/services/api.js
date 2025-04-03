@@ -114,10 +114,11 @@ export const dreamService = {
       formData.append('date', dreamData.date);
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream`, {
+      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/file`, {
         method: 'POST',
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: formData
       });
