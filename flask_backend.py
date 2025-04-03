@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 import os
 # import fitz  # PyMuPDF
 from dotenv import load_dotenv
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+# JWT 관련 임포트 제거
 
 # from transformers import AutoTokenizer, AutoModelForSequenceClassification
 # import torch
@@ -44,7 +44,7 @@ CORS(app)
 # SQLite 데이터베이스 설정
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dreams.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
+# JWT 설정 제거
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -52,20 +52,7 @@ bcrypt = Bcrypt(app)
 # 최대 파일 크기 제한 10MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
-jwt = JWTManager(app)
-
-@jwt.invalid_token_loader
-def invalid_token_callback(error):
-    return jsonify({"error": "잘못된 토큰입니다."}), 422
-
-@jwt.unauthorized_loader
-def unauthorized_callback(error):
-    return jsonify({"error": "인증 토큰이 없습니다."}), 401
-
-@jwt.expired_token_loader
-def expired_token_callback(jwt_header, jwt_payload):
-    return jsonify({"error": "토큰이 만료되었습니다."}), 401
-
+# JWT 관련 설정 제거
 
 # User 모델 정의
 class User(db.Model):
@@ -161,26 +148,19 @@ def login():
     user = User.query.filter_by(username=username).first()
 
     if user and bcrypt.check_password_hash(user.password, password):
-        # 로그인 성공 시 JWT 토큰 발급
-        access_token = create_access_token(identity=user.id)
+        # JWT 토큰 발급 대신 사용자 ID만 반환
         return jsonify({
             'id': user.id,
             'username': user.username,
-            'access_token': access_token,
         }), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
 
 
 @app.route('/user/<string:user_id>/dream', methods=['POST'])
-@jwt_required()
+# @jwt_required() 데코레이터 제거
 def submit_dream_text(user_id):
-    current_user_id = get_jwt_identity()
-    
-    # 수정 1: 사용자 ID를 문자열로 변환하여 비교 (JWT에서는 숫자일 수 있음)
-    # 422 오류는 종종 ID 형식 불일치로 인해 발생함
-    if str(user_id) != str(current_user_id):
-        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    # JWT 검증 코드 제거
     
     data = request.get_json()
     if not data:
@@ -198,7 +178,7 @@ def submit_dream_text(user_id):
     if not title or not content or not date:
         return jsonify({'error': 'Title, date and content are required'}), 400
 
-    # 수정 2: 감정 분석을 위한 기본값을 JSON 형식으로 설정
+    #  2: 감정 분석을 위한 기본값을 JSON 형식으로 설정
     # 이전 코드에서는 emotions 필드가 없거나 잘못된 형식이었을 가능성 있음
     emotions = json.dumps({"emotions": []})
 
@@ -212,7 +192,7 @@ def submit_dream_text(user_id):
     db.session.add(dream)
     db.session.commit()
 
-    # 수정 3: 클라이언트가 기대하는 형식으로 응답 반환
+    #  3: 클라이언트가 기대하는 형식으로 응답 반환
     # dreamId 필드를 추가하여 프론트엔드 코드와 호환성 유지
     return jsonify({
         'id': dream.id,  # UUID 문자열
@@ -225,11 +205,9 @@ def submit_dream_text(user_id):
 
 
 @app.route('/user/<string:user_id>/dream/file', methods=['POST'])
-@jwt_required()
+# @jwt_required() 데코레이터 제거
 def submit_dream_file(user_id):
-    current_user_id = get_jwt_identity()
-    if user_id != current_user_id:
-        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    # JWT 검증 코드 제거
 
     # 요청 데이터 확인
     print("🔹 Request form data:", request.form)
@@ -239,15 +217,19 @@ def submit_dream_file(user_id):
     title = request.form.get('title')
     date = request.form.get('date')
     content = request.form.get('content', "")  # None이면 빈 문자열 처리
-    file = request.files.get('file')
 
-    # 필수 필드 확인
-    if not title or not date or not file:
-        return jsonify({'error': 'Title, date, and file are required'}), 400
+    # 파일 데이터 검증
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in the request'}), 400
+        
+    file = request.files['file']
 
     # 파일 확인
-    if 'file' not in request.files or file.filename == '':
+    if file.filename == '':
         return jsonify({'error': 'No file uploaded'}), 400
+    
+    if not title or not date:
+        return jsonify({'error': 'Title and date are required'}), 400
 
     filename = secure_filename(file.filename)
     save_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -261,36 +243,45 @@ def submit_dream_file(user_id):
     try:
         print('pdf 파일 처리중...')
         content = process_pdfs(UPLOAD_FOLDER, user_id, title)
-        emotions = process_qdrant_document(user_id, title)
+        
+        # 감정 분석 기본값
+        emotions = json.dumps({"emotions": []})
+
+        try:
+            # 실제 감정 분석 시도
+            emotions = process_qdrant_document(user_id, title)
+        except Exception as e:
+            print(f"감정 분석 중 오류 발생: {str(e)}")
+            
     except Exception as e:
         return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
 
     # DB 저장
     dream = Dream(user_id=user_id, title=filename, date=date, content=content,
                   file_path=save_path, emotions=emotions, type='file')
+    
     db.session.add(dream)
     db.session.commit()
 
+    # 프론트엔드와 호환되는 응답 형식
     return jsonify({
         'id': dream.id,
+        'dreamId': dream.id,  # 프론트엔드가 기대하는 필드명
         'title': dream.title,
         'date': dream.date,
         'content': dream.content,
-        'file_path': dream.file_path
+        'file_path': dream.file_path,
+        'created_at': dream.created_at.isoformat()
     }), 201
 
 
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>', methods=['GET'])
-@jwt_required()
+# @jwt_required() 데코레이터 제거
 def get_dream(user_id, dream_id):
-    current_user_id = get_jwt_identity()
+    # JWT 검증 코드 제거
     
-    # 수정 1: 사용자 ID를 문자열로 변환하여 비교 (JWT에서는 숫자로 반환될 수 있음)
-    if str(user_id) != str(current_user_id):
-        return jsonify({'error': '접근 권한이 없습니다'}), 403
-    
-    # 수정 2: dream_id가 UUID 형식인지 또는 날짜 형식인지 확인
+    #  2: dream_id가 UUID 형식인지 또는 날짜 형식인지 확인
     # 이전 코드에서는 created_at만 처리하여 UUID 형식의 ID로 조회 시 422 오류 발생
     try:
         # UUID 형식으로 시도
@@ -299,7 +290,7 @@ def get_dream(user_id, dream_id):
     except ValueError:
         # 날짜 형식으로 시도
         try:
-            # 수정 3: 날짜 파싱 방식 개선 및 시간 범위 쿼리 사용
+            #  3: 날짜 파싱 방식 개선 및 시간 범위 쿼리 사용
             # 이전에는 정확한 시간 일치만 확인하여 밀리초 차이로 인한 불일치 발생 가능
             created_at_dt = parser.parse(dream_id)
             dream = Dream.query.filter_by(user_id=user_id).filter(
@@ -312,7 +303,7 @@ def get_dream(user_id, dream_id):
     if not dream:
         return jsonify({'error': 'Dream not found'}), 404
     
-    # 수정 4: 클라이언트가 기대하는 형식으로 응답 반환
+    #  4: 클라이언트가 기대하는 형식으로 응답 반환
     # dreamId 필드를 추가하여 프론트엔드 코드와 호환성 유지
     return jsonify({
         'id': dream.id,
@@ -326,11 +317,9 @@ def get_dream(user_id, dream_id):
 
 
 # @app.route('/user/<string:user_id>/dreams', methods=['GET'])
-# @jwt_required()
+# # @jwt_required() 데코레이터 제거
 # def get_dreams(user_id):
-#     current_user_id = get_jwt_identity()
-#     if user_id != current_user_id:
-#         return jsonify({'error': '접근 권한이 없습니다'}), 403
+#     # JWT 검증 코드 제거
     
 #     dreams = Dream.query.filter_by(user_id=user_id).order_by(
 #         Dream.created_at.desc()).all()
@@ -345,16 +334,11 @@ def get_dream(user_id, dream_id):
 
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/analysis', methods=['GET'])
-@jwt_required()
+# @jwt_required() 데코레이터 제거
 def get_dream_analysis(user_id, dream_id):
-    current_user_id = get_jwt_identity()
+    # JWT 검증 코드 제거
     
-    # 수정 1: 사용자 ID를 문자열로 변환하여 비교
-    # JWT에서는 정수로 반환될 수 있어 문자열 비교 필요
-    if str(user_id) != str(current_user_id):
-        return jsonify({'error': '접근 권한이 없습니다'}), 403
-    
-    # 수정 2: dream_id 처리 로직 개선
+    # dream_id 처리 로직 개선
     # UUID와 created_at 두 가지 형식 모두 지원하도록 수정
     try:
         # UUID 형식으로 시도
@@ -364,7 +348,7 @@ def get_dream_analysis(user_id, dream_id):
         # 날짜 형식으로 시도
         try:
             created_at_dt = parser.parse(dream_id)
-            # 수정 3: 시간 범위 쿼리로 정확도 향상
+            # 시간 범위 쿼리로 정확도 향상
             # 밀리초 차이로 인한 불일치 방지
             dream = Dream.query.filter_by(user_id=user_id).filter(
                 Dream.created_at >= created_at_dt,
@@ -377,7 +361,7 @@ def get_dream_analysis(user_id, dream_id):
         return jsonify({'error': 'Dream not found'}), 404
     
     try:
-        # 수정 4: 예외 처리 강화
+        #  4: 예외 처리 강화
         # emotions 필드가 유효한 JSON인지 확인
         emotions_data = dream.emotions
         if not emotions_data:
@@ -389,8 +373,10 @@ def get_dream_analysis(user_id, dream_id):
         raw_analysis_emotion = agent_e.call_solar_llm(prompt_e)
         
         # 심볼 분석
-        # 수정 5: 내용이 없는 경우 기본값 처리
+        #  5: 내용이 없는 경우 기본값 처리
         content = dream.content or ""
+        
+        # "symbols", "intentions"
         formatted_response_symbol = symbol_agent.analyze_symbols_and_intentions(content)
         
         # 프론트엔드 형식에 맞게 변환
@@ -402,13 +388,13 @@ def get_dream_analysis(user_id, dream_id):
         # 응답 합치기
         combined_response = {**formatted_response_emotion, **formatted_response_symbol}
         
-        # 수정 6: 응답에 dream ID 정보 추가하여 프론트엔드 호환성 유지
+        #  6: 응답에 dream ID 정보 추가하여 프론트엔드 호환성 유지
         combined_response["dreamId"] = dream.id
         combined_response["id"] = dream.id
         
         return jsonify(combined_response)
     except Exception as e:
-        # 수정 7: 오류 로깅 강화 및 상세 오류 메시지 제공
+        #  7: 오류 로깅 강화 및 상세 오류 메시지 제공
         print(f"분석 중 오류 발생: {str(e)}")
         import traceback
         traceback.print_exc()  # 자세한 오류 스택 출력
@@ -420,13 +406,9 @@ def get_dream_analysis(user_id, dream_id):
 
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/chat', methods=['POST'])
-@jwt_required()
+# @jwt_required() 데코레이터 제거
 def process_chat_message(user_id, dream_id):
-    current_user_id = get_jwt_identity()
-    
-    # 사용자 ID를 문자열로 변환하여 비교
-    if str(user_id) != str(current_user_id):
-        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    # JWT 검증 코드 제거
     
     data = request.get_json()
     if not data or 'message' not in data:
