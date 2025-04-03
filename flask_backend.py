@@ -410,13 +410,16 @@ def get_dream_analysis(user_id, dream_id):
 
         # 분석 방법 1 (심주원)
         # emotions = process_qdrant_document(user_id, title)
-        combined_text = text_combining(user_id, dream.title)
-        emotions = analyze_emotions(combined_text)
-        app.logger.info(f'심주원 emotions = {emotions}')
+        # combined_text = text_combining(user_id, dream.title)
+        # app.logger.info(f"combined_text length = {len(combined_text)}")
+        # emotions = analyze_emotions(combined_text)
+        # app.logger.info(f'심주원 emotions = {emotions}')
         
         # 분석 방법 2 (김승연)
+        app.logger.info(f"감정 에이전트 class 실행")
         agent_e = EmotionAgent(emotions_data)
         prompt_e = agent_e.create_llm_prompt(dream.content)
+        app.logger.info(f"감정 에이전트 실행")
         raw_analysis_emotion = agent_e.call_solar_llm(prompt_e)
         
         # 심볼 분석, 내용이 없는 경우 기본값 처리
@@ -425,20 +428,24 @@ def get_dream_analysis(user_id, dream_id):
 
         # "symbols", "intentions"
         formatted_response_symbol = analyze_symbols_and_intentions(content)
+        app.logger.info(f"response_symbol = {formatted_response_symbol}")
+
         
         # "analysis-emotions", "emotions"
         # 분석 방법 1
-        formatted_analysis_emotion = {"analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다.")}
+        # formatted_analysis_emotion = {"analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다.")}
         
         # 분석 방법 2
-        # formatted_response_emotion = {
-        #     "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
-        #     "emotions": raw_analysis_emotion.get("emotions", [])
-        # }
+        formatted_response_emotion = {
+            "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
+            "emotions": raw_analysis_emotion.get("emotions", [])
+        }
+        app.logger.info(f"response_emotions = {formatted_response_emotion}")
+
         
         # 응답 합치기
-        # combined_response = {**formatted_response_emotion, **formatted_response_symbol}
-        combined_response = {**formatted_analysis_emotion, **emotions, **formatted_response_symbol}     # 예상대로 잘 나오는지 확인 필요
+        combined_response = {**formatted_response_emotion, **formatted_response_symbol}
+        # combined_response = {**formatted_analysis_emotion, **emotions, **formatted_response_symbol}     # 예상대로 잘 나오는지 확인 필요
         
         # 응답에 dream ID 정보 추가하여 프론트엔드 호환성 유지
         combined_response["dreamId"] = dream.dream_id
