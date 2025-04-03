@@ -175,7 +175,7 @@ def login():
         return jsonify({'error': 'Invalid credentials'}), 401
 
 
-def generate_dream_id(title, user_id, date):
+def generate_dream_id(title, date):
     # 특수 문자 제거, 소문자 변환, 공백을 언더스코어로 대체
     clean_title = re.sub(r'[^\w\s]', '', title).lower().replace(' ', '_')
     
@@ -183,7 +183,7 @@ def generate_dream_id(title, user_id, date):
     clean_date = date.replace('-', '').replace('/', '')
     
     # 최종 dream_id 생성 (유저ID_날짜_제목)
-    dream_id = f"{user_id}_{clean_date}_{clean_title}"
+    dream_id = f"{clean_date}_{clean_title}"
     
     # 길이 제한 (선택적)
     return dream_id[:100]
@@ -215,8 +215,8 @@ def submit_dream_text(user_id):
     # 이전 코드에서는 emotions 필드가 없거나 잘못된 형식이었을 가능성 있음
     emotions = json.dumps({"emotions": []})
 
-    dream_id = generate_dream_id(title, user_id, date)
-    app.logger(f'dream_id = {dream_id}, user_id = {user_id}')
+    dream_id = generate_dream_id(title, date)
+    app.logger.info(f'dream_id = {dream_id}, user_id = {user_id}')
     dream = Dream(user_id=user_id,
                   title=title,
                   date=date,
@@ -253,6 +253,7 @@ def submit_dream_file(user_id):
     title = request.form.get('title')
     date = request.form.get('date')
     content = request.form.get('content', "")  # None이면 빈 문자열 처리
+    username = request.form()
 
     # 파일 데이터 검증
     if 'file' not in request.files:
@@ -293,7 +294,7 @@ def submit_dream_file(user_id):
         app.logger.info('지원되지 않는 파일 형식입니다.')
         return jsonify({'error': '지원되지 않는 파일 형식입니다. (PDF 또는 이미지 파일만 가능)'}), 400
 
-    dream_id = generate_dream_id(title, user_id, date)
+    dream_id = generate_dream_id(title, date)
 
     dream = Dream(user_id=user_id, title=filename, date=date, content=content,
                   file_path=save_path, type='file', dream_id=dream_id)
@@ -363,7 +364,7 @@ def get_dream(user_id, dream_id):
 
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/analysis', methods=['GET'])
-def get_dream_analysis(user_id, dream_id, title):
+def get_dream_analysis(user_id, dream_id):
     # dream_id 처리 로직 개선
     # UUID와 created_at 두 가지 형식 모두 지원하도록 수정
     app.logger.info(f"Get dream request - User ID: {user_id}, Dream ID: {dream_id}")
@@ -391,7 +392,7 @@ def get_dream_analysis(user_id, dream_id, title):
 
         # 분석 방법 1 (심주원)
         # emotions = process_qdrant_document(user_id, title)
-        combined_text = text_combining(user_id, title)
+        combined_text = text_combining(user_id, dream.title)
         emotions = analyze_emotions(combined_text)
         app.logger.info(f'심주원 emotions = {emotions}')
         
