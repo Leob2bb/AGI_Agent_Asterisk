@@ -11,23 +11,32 @@ export const authService = {
         },
         body: JSON.stringify({ username, password })
       });
+      
+      const result = await response.json();
+      
       if (!response.ok) {
-        const error = new Error('Login failed');
+        const error = new Error(result.message || 'Login failed');
         error.status = response.status;
         throw error;
       }
 
-      // 응답에서 토큰을 저장
-      const result = await response.json();
-      if (result.token) {
-        localStorage.setItem('token', result.token);
+      // 토큰이 있는지 확실히 확인
+      if (!result.token) {
+        throw new Error('No token received from server');
       }
-      localStorage.setItem('user', JSON.stringify({
-        id: result.id,
-        username: result.username
-      }));
 
-      return result;
+      // 토큰을 localStorage에 저장
+      localStorage.setItem('token', result.token);
+      
+      // 사용자 정보 저장
+      const userData = {
+        id: result.id,
+        username: result.username || username,
+        token: result.token
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      return userData;
     } catch (error) {
       console.error('Auth API Error:', error);
       throw error;
@@ -138,11 +147,15 @@ export const dreamService = {
   getDreamHistory: async (userId) => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dreams`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Authorization': `Bearer ${token}`
         }
       });
       if (!response.ok) {
