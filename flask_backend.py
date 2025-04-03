@@ -208,60 +208,47 @@ def submit_dream_file(user_id):
     current_user_id = get_jwt_identity()
     if user_id != current_user_id:
         return jsonify({'error': '접근 권한이 없습니다'}), 403
-    
-    title = request.form.get('title')  # 일반 텍스트 데이터
+
+    # 요청 데이터 확인
+    print("🔹 Request form data:", request.form)
+    print("🔹 Request files:", request.files)
+
+    # 필수 데이터 받기
+    title = request.form.get('title')
     date = request.form.get('date')
-    content = request.form.get('content')
+    content = request.form.get('content', "")  # None이면 빈 문자열 처리
     file = request.files.get('file')
 
-    print("title: ", title, "date: ", date, "content: ", content)
-    print("Request files: ", request.files)
-
+    # 필수 필드 확인
     if not title or not date or not file:
         return jsonify({'error': 'Title, date, and file are required'}), 400
-    # if not content:
-    #     return jsonify({'error': 'Content is required'}), 400
 
-    # if 'file' not in request.files:
-    #     return jsonify({'error': 'No file uploaded'}), 400
+    # 파일 확인
+    if 'file' not in request.files or file.filename == '':
+        return jsonify({'error': 'No file uploaded'}), 400
 
-    if file.filename is not None:
-        filename = secure_filename(file.filename)
-        save_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(save_path)
+    filename = secure_filename(file.filename)
+    save_path = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(save_path)
 
-        file_ext = os.path.splitext(filename)[1].lower()
-        # 확장자가 .pdf일 경우만 실행
-        if file.mimetype != 'application/pdf':
-            print('pdf 파일이 아닙니다!')
-            return jsonify({'error': 'Only PDF files are supported'}), 400
-        # 예외 처리가 2개인가?
-        if file_ext == '.pdf':
-            try:
-                print('pdf 파일 처리중...')
-                content = process_pdfs(UPLOAD_FOLDER, user_id, title)
-                emotions = process_qdrant_document(user_id, title)
-            except Exception as e:
-                return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
-    
-        # 디버깅
-        print(emotions)
+    # 확장자 및 MIME 타입 검사
+    file_ext = os.path.splitext(filename)[1].lower()
+    if file_ext != '.pdf' or file.mimetype != 'application/pdf':
+        return jsonify({'error': 'Only PDF files are supported'}), 400
 
-    else:
-        return jsonify({'error': 'Empty filename'}), 400
+    try:
+        print('pdf 파일 처리중...')
+        content = process_pdfs(UPLOAD_FOLDER, user_id, title)
+        emotions = process_qdrant_document(user_id, title)
+    except Exception as e:
+        return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
 
-    dream = Dream(user_id=user_id,
-                  title=filename,
-                  date=date,
-                  content=content,
-                  file_path=save_path,
-                  emotions = emotions,
-                  type='file')
-
+    # DB 저장
+    dream = Dream(user_id=user_id, title=filename, date=date, content=content,
+                  file_path=save_path, emotions=emotions, type='file')
     db.session.add(dream)
     db.session.commit()
 
-    # emotions 반영해야 함
     return jsonify({
         'id': dream.id,
         'title': dream.title,
@@ -269,6 +256,7 @@ def submit_dream_file(user_id):
         'content': dream.content,
         'file_path': dream.file_path
     }), 201
+
 
 
 # 특정 사용자의 특정 꿈 정보를 조회하는 API
