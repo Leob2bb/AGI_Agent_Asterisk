@@ -164,7 +164,7 @@ def login():
         # 로그인 성공 시 JWT 토큰 발급
         access_token = create_access_token(identity=user.id)
         return jsonify({
-            'user_id': user.id,
+            'id': user.id,
             'username': user.username,
             'access_token': access_token,
         }), 200
