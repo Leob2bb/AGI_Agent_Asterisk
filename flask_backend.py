@@ -191,6 +191,7 @@ def submit_dream_text(user_id):
     date = data.get('date')
     content = data.get('content')
 
+
     if not title or not content or not date:
         return jsonify({'error': 'Title, date and content are required'}), 400
 
