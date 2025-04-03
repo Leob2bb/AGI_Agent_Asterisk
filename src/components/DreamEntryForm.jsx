@@ -70,7 +70,7 @@ function DreamEntryForm({ onSuccess, userId }) {
       // 성공 콜백 호출 및 페이지 이동
       onSuccess(result); // Assuming onSuccess now handles navigation with dreamId
       if (result && result.dreamId) { // Check for dreamId in the response
-        navigate(`/dream-analysis/${result.dreamId}`);
+        navigate(`/user/${userId}/dream/${result.dreamId}`);
       }
 
 
