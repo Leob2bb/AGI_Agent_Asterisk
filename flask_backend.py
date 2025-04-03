@@ -14,20 +14,13 @@ import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
-# from langchain.schema import Document
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
-# from langchain_upstage.embeddings import UpstageEmbeddings
-# from langchain_qdrant import QdrantVectorStore
-# from qdrant_client import QdrantClient
-# from qdrant_client.models import Distance, VectorParams
-
 # from transformers import AutoTokenizer, AutoModelForSequenceClassification
 # import torch
 
 # batch_parse.py 참조
 from batch_parse import process_pdfs
 # 감정 분석 AGENT 클래스 참조
-from agent.emotion_agent import EmotionAgent
+from agent_emotion.emotion_agent import EmotionAgent
 # emotion_analysis.py 참조
 from emotion_analysis import process_qdrant_document
 
@@ -152,19 +145,24 @@ def login():
     user = User.query.filter_by(username=username).first()
 
     if user and bcrypt.check_password_hash(user.password, password):
-        # # 로그인 성공 시 JWT 토큰 발급
-        # access_token = create_access_token(identity=user.id)
-        # return jsonify({
-        #     'message': 'Login successful',
-        #     'access_token': access_token
-        # }), 200
-        return jsonify({'id': user.id, 'username': user.username}), 200
+        # 로그인 성공 시 JWT 토큰 발급
+        access_token = create_access_token(identity=user.id)
+        return jsonify({
+            'user_id': user.id,
+            'username': user.username,
+            'access_token': access_token,
+        }), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
 
 
 @app.route('/user/<string:user_id>/dream', methods=['POST'])
+@jwt_required()
 def submit_dream_text(user_id):
+    current_user_id = get_jwt_identity()
+    if user_id != current_user_id:
+        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data received'}), 400
@@ -199,7 +197,12 @@ def submit_dream_text(user_id):
 
 
 @app.route('/user/<string:user_id>/dream/file', methods=['POST'])
+@jwt_required()
 def submit_dream_file(user_id):
+    current_user_id = get_jwt_identity()
+    if user_id != current_user_id:
+        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    
     title = request.form.get('title')  # 일반 텍스트 데이터
     date = request.form.get('date')
     content = request.form.get('content')
@@ -261,7 +264,12 @@ def submit_dream_file(user_id):
 
 # 특정 사용자의 특정 꿈 정보를 조회하는 API
 @app.route('/user/<string:user_id>/dream/<created_at>', methods=['GET'])
+@jwt_required()
 def get_dream(user_id, created_at):
+    current_user_id = get_jwt_identity()
+    if user_id != current_user_id:
+        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    
     try:
         created_at_dt = parser.parse(created_at)
     except Exception:
@@ -280,8 +288,12 @@ def get_dream(user_id, created_at):
 
 
 @app.route('/user/<string:user_id>/dreams', methods=['GET'])
+@jwt_required()
 def get_dreams(user_id):
-
+    current_user_id = get_jwt_identity()
+    if user_id != current_user_id:
+        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    
     dreams = Dream.query.filter_by(user_id=user_id).order_by(
         Dream.created_at.desc()).all()
     
@@ -295,7 +307,12 @@ def get_dreams(user_id):
 
 
 @app.route('/user/<string:user_id>/dream/<created_at>/analysis', methods=['GET'])
+@jwt_required()
 def get_dream_analysis(user_id, created_at):
+    current_user_id = get_jwt_identity()
+    if user_id != current_user_id:
+        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    
     try:
         created_at_dt = parser.parse(created_at)
     except Exception:
@@ -313,7 +330,12 @@ def get_dream_analysis(user_id, created_at):
 
 
 @app.route('/user/<user_id>/dream/<created_at>/chat', methods=['POST'])
+@jwt_required()
 def process_chat_message(user_id, created_at):
+    current_user_id = get_jwt_identity()
+    if user_id != current_user_id:
+        return jsonify({'error': '접근 권한이 없습니다'}), 403
+    
     data = request.get_json()
     if not data or 'message' not in data:
         return jsonify({"error": "메시지가 제공되지 않았습니다"}), 400
