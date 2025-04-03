@@ -112,6 +112,7 @@ def register():
     if not data:
         return jsonify({'error': 'No data received'}), 400
     print("requests data: ", data)
+    print("회원가입")
     # print("requests header: ", str(request.headers))
 
     username = data.get('username')
@@ -137,6 +138,7 @@ def login():
     if not data:
         return jsonify({'error': 'No data received'}), 400
     print("requests data: ", data)
+    print("로그인")
     # print("requests header: ", str(request.headers))
 
     username = data.get('username')
@@ -169,6 +171,8 @@ def submit_dream_text(user_id):
     if not data:
         return jsonify({'error': 'No data received'}), 400
     print("requests data: ", data)
+    print(f"사용자 id = {user_id}")
+
     # print("requests header: ", str(request.headers))
 
     title = data.get('title')
@@ -209,6 +213,7 @@ def submit_dream_file(user_id):
     date = request.form.get('date')
     content = request.form.get('content')
     file = request.files.get('file')
+
     print("title: ", title, "date: ", date, "content: ", content)
     print("Request files: ", request.files)
 
@@ -228,10 +233,12 @@ def submit_dream_file(user_id):
         file_ext = os.path.splitext(filename)[1].lower()
         # 확장자가 .pdf일 경우만 실행
         if file.mimetype != 'application/pdf':
+            print('pdf 파일이 아닙니다!')
             return jsonify({'error': 'Only PDF files are supported'}), 400
         # 예외 처리가 2개인가?
         if file_ext == '.pdf':
             try:
+                print('pdf 파일 처리중...')
                 content = process_pdfs(UPLOAD_FOLDER, user_id, title)
                 emotions = process_qdrant_document(user_id, title)
             except Exception as e:
@@ -289,23 +296,23 @@ def get_dream(user_id, created_at):
     return jsonify({'error': 'Dream not found'}), 404
 
 
-@app.route('/user/<string:user_id>/dreams', methods=['GET'])
-@jwt_required()
-def get_dreams(user_id):
-    current_user_id = get_jwt_identity()
-    if user_id != current_user_id:
-        return jsonify({'error': '접근 권한이 없습니다'}), 403
+# @app.route('/user/<string:user_id>/dreams', methods=['GET'])
+# @jwt_required()
+# def get_dreams(user_id):
+#     current_user_id = get_jwt_identity()
+#     if user_id != current_user_id:
+#         return jsonify({'error': '접근 권한이 없습니다'}), 403
     
-    dreams = Dream.query.filter_by(user_id=user_id).order_by(
-        Dream.created_at.desc()).all()
+#     dreams = Dream.query.filter_by(user_id=user_id).order_by(
+#         Dream.created_at.desc()).all()
     
-    results = [{
-        'title': d.title,
-        'type': d.type,
-        'created_at': d.created_at.isoformat()
-    } for d in dreams]
+#     results = [{
+#         'title': d.title,
+#         'type': d.type,
+#         'created_at': d.created_at.isoformat()
+#     } for d in dreams]
 
-    return jsonify({'dreams': results})
+#     return jsonify({'dreams': results})
 
 
 @app.route('/user/<string:user_id>/dream/<created_at>/analysis', methods=['GET'])
@@ -331,8 +338,6 @@ def get_dream_analysis(user_id, created_at):
 
     # symbol
     
-
-
     # 프론트엔드 형식에 맞게 변환
     formatted_response_emotion = {
         "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
