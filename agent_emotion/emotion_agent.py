@@ -1,7 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
-from agent import label_map, negative_emotions, help_resources  # 공통 상수 가져오기
+from agent_emotion import label_map, negative_emotions, help_resources  # 공통 상수 가져오기
 
 # 환경 변수 로드
 load_dotenv()
@@ -89,7 +89,20 @@ class EmotionAgent:
 
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
-            return response.json()["choices"][0]["message"]["content"]
+            
+            # 이거 형식 맞춰 바꿔야 함
+            analysis_text = response.json()["choices"][0]["message"]["content"]
+
+             # 감정 지표 딕셔너리로 변환
+            emotion_dict = {
+                e["label"]: e["score"]
+                for e in self.emotions
+            }
+
+            return {
+                "analysis-emotions": analysis_text,
+                "emotions": emotion_dict
+            }
 
         except Exception as e:
             print(f"❌ Solar API 호출 실패: {e}")

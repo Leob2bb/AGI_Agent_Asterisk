@@ -7,7 +7,7 @@ import os
 import uuid
 
 # 의도, 사물 & 행동 Agent 불러오기
-from dream_symbol.dream_symbol_analysis import analyze_symbols_and_intentions
+from agent_symbol.symbol_agent import analyze_symbols_and_intentions
 
 # ========== 설정 ==========
 EMBEDDING_API_KEY = os.getenv("UPSTAGE_API_KEY")

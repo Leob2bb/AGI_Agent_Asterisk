@@ -23,6 +23,8 @@ from batch_parse import process_pdfs
 from agent_emotion.emotion_agent import EmotionAgent
 # emotion_analysis.py 참조
 from emotion_analysis import process_qdrant_document
+# symbol agent 참조
+from agent_symbol import symbol_agent
 
 # 환경 변수 로드 (.env에 키들 있어야 함)
 load_dotenv()
@@ -322,11 +324,27 @@ def get_dream_analysis(user_id, created_at):
     if not dream:
         return jsonify({'error': 'Dream not found'}), 404
     
-    agent = EmotionAgent(dream.emotions)
-    prompt = agent.create_llm_prompt(dream.content)
-    analysis_result = agent.call_solar_llm(prompt)
-    print("analysis_result = ", jsonify(analysis_result))
-    return jsonify(analysis_result)
+    # emotion
+    agent_e = EmotionAgent(dream.emotions)
+    prompt_e = agent_e.create_llm_prompt(dream.content)
+    raw_analysis_emotion = agent_e.call_solar_llm(prompt_e)
+
+    # symbol
+    
+
+
+    # 프론트엔드 형식에 맞게 변환
+    formatted_response_emotion = {
+        "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
+        "emotions": raw_analysis_emotion.get("emotions", [])
+    }
+
+    content = request.form.get('content')
+    formatted_response_symbol = symbol_agent.analyze_symbols_and_intentions(content)
+
+    print("심리 분석 결과는 다음과 같습니다!")
+    print(jsonify(**formatted_response_emotion, **formatted_response_symbol))
+    return jsonify(**formatted_response_emotion, **formatted_response_symbol)
 
 
 @app.route('/user/<user_id>/dream/<created_at>/chat', methods=['POST'])
