@@ -28,7 +28,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from batch_parse import process_pdfs
 # 감정 분석 AGENT 클래스 참조
 from agent.emotion_agent import EmotionAgent
-# emotion_analysis.py 참조조
+# emotion_analysis.py 참조
 from emotion_analysis import process_qdrant_document
 
 # 환경 변수 로드 (.env에 키들 있어야 함)
