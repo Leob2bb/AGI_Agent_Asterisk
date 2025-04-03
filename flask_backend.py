@@ -322,10 +322,6 @@ def get_dream(user_id, dream_id):
     except Exception:
         return jsonify({'error': 'Invalid dream ID format'}), 400
     
-    except Exception as e:
-        app.logger.error(f"Error processing dream ID: {e}")
-        return jsonify({'error': 'Error processing dream ID'}), 500
-    
     if not dream:
         app.logger.warning(f"Dream not found for user {user_id} with ID {dream_id}")
         return jsonify({'error': 'Dream not found'}), 404
@@ -360,7 +356,7 @@ def get_dream(user_id, dream_id):
 
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/analysis', methods=['GET'])
-def get_dream_analysis(user_id, dream_id, title):
+def get_dream_analysis(user_id, dream_id):
     # dream_id 처리 로직 개선
     # UUID와 created_at 두 가지 형식 모두 지원하도록 수정
     app.logger.info(f"Get dream request - User ID: {user_id}, Dream ID: {dream_id}")
