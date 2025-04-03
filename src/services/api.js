@@ -111,7 +111,7 @@ export const dreamService = {
       formData.append('date', dreamData.date);
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/file`, {
+      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json'
