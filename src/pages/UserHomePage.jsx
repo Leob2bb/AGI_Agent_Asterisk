@@ -35,13 +35,14 @@ function UserHomePage({ currentUser, setCurrentUser }) {
     try {
       console.log("파일 업로드 결과:", result);
 
-      // created_at을 ID로 사용
-      const dreamId = result.created_at;
+      // 백엔드에서 반환된 id나 created_at을 사용
+      const dreamId = result.id || result.created_at;
       if (dreamId) {
-        // 즉시 분석 페이지로 이동
-        navigate(`/user/${userId}/dream/${dreamId}`);
+        // 바로 분석 페이지로 이동
+        navigate(`/user/${userId}/dream/${dreamId}/analysis`);
       } else {
-        console.error('No created_at in response:', result);
+        console.error('No valid ID in response:', result);
+        console.log('Full response:', result);
       }
     } catch (error) {
       console.error('Failed to handle dream submission:', error);
