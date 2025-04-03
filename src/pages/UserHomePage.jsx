@@ -43,8 +43,10 @@ function UserHomePage({ currentUser, setCurrentUser }) {
       setDreamHistory(historyResponse.dreams || []);
 
       // 새로 생성된 꿈의 분석 페이지로 이동
-      if (dreamId) {
-        navigate(`/user/${userId}/dream/${dreamId}`);
+      // 파일 업로드 결과에서 dreamId 추출
+      const resultDreamId = result.dreamId || result.created_at;
+      if (resultDreamId) {
+        navigate(`/user/${userId}/dream/${resultDreamId}`);
       }
     } catch (error) {
       console.error('Failed to update dream history:', error);
