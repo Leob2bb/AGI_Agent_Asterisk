@@ -6,6 +6,7 @@ import json
 
 # 환경 변수 로드
 load_dotenv()
+UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 
 class EmotionAgent:
     def __init__(self, emotion_scores, dream_summary=None):
@@ -140,3 +141,4 @@ class EmotionAgent:
         except Exception as e:
             print(f"❌ Solar API 호출 실패: {e}")
             return None
+        

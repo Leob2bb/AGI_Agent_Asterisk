@@ -27,7 +27,8 @@ from agent_emotion.emotion_agent import EmotionAgent
 from emotion_analysis import process_qdrant_document, text_combining, analyze_emotions
 # symbol agent 참조
 from agent_symbol.symbol_agent import analyze_symbols_and_intentions
-
+# 챗봇
+from agent_emotion.llm_utils import call_solar_chat 
 
 # 환경 변수 로드 (.env에 키들 있어야 함)
 load_dotenv()
@@ -473,6 +474,9 @@ def get_dream_analysis(user_id, dream_id):
         }), 500
 
 
+# 이전 대화 기억
+chat_history = {}
+
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/chat', methods=['POST'])
 def process_chat_message(user_id, dream_id):
     data = request.get_json()
@@ -490,19 +494,44 @@ def process_chat_message(user_id, dream_id):
     if not dream:
         return jsonify({'error': 'Dream not found'}), 404
 
+
+    # 채팅 이력 가져오기
+    chat_key = f"{user_id}_{dream_id}"
+    if chat_key not in chat_history:
+        chat_history[chat_key] = []
+
+    # 시스템 프롬프트 최초 삽입
+    if not any(msg["role"] == "system" for msg in chat_history[chat_key]):
+        chat_history[chat_key].insert(0, {
+            "role": "system",
+            "content": "너는 꿈 해석과 심리 상담에 특화된 AI야. 사용자와 친절하게 대화해줘."
+        })
+
     
+    chat_history[chat_key].append({"role": "user", "content": user_message})
+
+    MAX_HISTORY = 20
+    # 마지막 MAX_HISTORY개만 유지
+    if len(chat_history[chat_key]) > MAX_HISTORY:
+        chat_history[chat_key] = [chat_history[chat_key][0]] + chat_history[chat_key][-MAX_HISTORY:]
+
+        
     try:
-        # AI 응답 구현 (임시)
-        ai_response = {
-            "response": f"당신의 메시지 '{user_message}'에 대한 응답입니다. 꿈에 관한 추가 질문이 있으신가요?"
-        }
-        return jsonify(ai_response)
+        ai_reply = call_solar_chat(chat_history[chat_key])
+        if not ai_reply:
+            return jsonify({"error": "AI 응답을 받지 못했습니다."}), 500
+            app.logger.info("ai 응답 실패...")
+        # AI 응답도 대화 이력에 추가
+        chat_history[chat_key].append({"role": "assistant", "content": ai_reply})
+        return jsonify({"response": ai_reply})
+
     except Exception as e:
         app.logger.error(f"채팅 처리 중 오류 발생: {str(e)}")
         return jsonify({
             "error": "채팅 처리 중 오류가 발생했습니다.",
             "details": str(e)
         }), 500
+
 
 if __name__ == '__main__':
     with app.app_context():
