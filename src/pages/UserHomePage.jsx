@@ -35,13 +35,13 @@ function UserHomePage({ currentUser, setCurrentUser }) {
     try {
       console.log("파일 업로드 결과:", result);
 
-      // 새로 생성된 꿈의 분석 페이지로 이동
-      const resultDreamId = result.dreamId || result.created_at;
-      if (resultDreamId) {
+      // created_at을 ID로 사용
+      const dreamId = result.created_at;
+      if (dreamId) {
         // 즉시 분석 페이지로 이동
-        navigate(`/user/${userId}/dream/${resultDreamId}`);
+        navigate(`/user/${userId}/dream/${dreamId}`);
       } else {
-        console.error('No dreamId in response:', result);
+        console.error('No created_at in response:', result);
       }
     } catch (error) {
       console.error('Failed to handle dream submission:', error);
