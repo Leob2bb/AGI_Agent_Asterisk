@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { dreamService } from '../services/api';
 
 function DreamChatAnalysis({ dreamId, userId, initialDream }) {
   const [messages, setMessages] = useState([]);
@@ -11,26 +12,14 @@ function DreamChatAnalysis({ dreamId, userId, initialDream }) {
   useEffect(() => {
     const fetchAnalysis = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/user/${userId}/dream/${dreamId}/analysis`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to get analysis');
-        }
-
-        const data = await response.json();
+        const data = await dreamService.getDreamAnalysis(userId, dreamId);
         setAnalysis(data);
 
         // 초기 메시지로 요약된 분석 내용 추가
         setMessages([
           {
             type: 'analysis',
-            content: data.interpretation || data.initialAnalysis,
+            content: data.initialAnalysis || "꿈 분석 결과를 불러올 수 없습니다.",
             timestamp: new Date()
           }
         ]);
@@ -69,20 +58,7 @@ function DreamChatAnalysis({ dreamId, userId, initialDream }) {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/user/${userId}/dream/${dreamId}/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ message: userMessage.content })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
+      const data = await dreamService.sendChatMessage(userId, dreamId, userMessage.content);
       setMessages(prev => [...prev, {
         type: 'analysis',
         content: data.response,

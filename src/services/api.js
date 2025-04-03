@@ -1,4 +1,3 @@
-// src/services/api.js
 const API_BASE_URL = "https://agi-agent-asterisk-render.onrender.com";
 
 export const authService = {
@@ -17,7 +16,18 @@ export const authService = {
         error.status = response.status;
         throw error;
       }
-      return await response.json();
+
+      // 응답에서 토큰을 저장
+      const result = await response.json();
+      if (result.token) {
+        localStorage.setItem('token', result.token);
+      }
+      localStorage.setItem('user', JSON.stringify({
+        id: result.id,
+        username: result.username
+      }));
+
+      return result;
     } catch (error) {
       console.error('Auth API Error:', error);
       throw error;
@@ -49,6 +59,7 @@ export const authService = {
   // 로그아웃
   logout: () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('token'); // 토큰도 함께 제거
   },
 
   // 현재 로그인한 사용자 가져오기
@@ -60,6 +71,11 @@ export const authService = {
     } catch (error) {
       return null;
     }
+  },
+
+  // 현재 토큰 가져오기
+  getToken: () => {
+    return localStorage.getItem('token');
   }
 };
 
@@ -67,11 +83,12 @@ export const dreamService = {
   // 직접 입력한 꿈 내용 제출
   submitDreamText: async (dreamData, userId) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify(dreamData)
       });
@@ -94,10 +111,11 @@ export const dreamService = {
       formData.append('date', dreamData.date);
       formData.append('file', file);
 
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/file`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': token ? `Bearer ${token}` : '',
           'Accept': 'application/json'
         },
         body: formData
@@ -119,51 +137,85 @@ export const dreamService = {
   // 사용자의 꿈 기록 가져오기
   getDreamHistory: async (userId) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/user/${userId}/dreams`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': token ? `Bearer ${token}` : ''
         }
       });
       if (!response.ok) {
         throw new Error('Failed to get dream history');
       }
-      return await response.json();
+      const data = await response.json();
+      // 'dreams' 키 아래의 배열을 반환하고, 각 꿈 항목에 created_at을 id로 사용
+      const dreams = (data.dreams || []).map(dream => ({
+        ...dream,
+        id: dream.id || dream.created_at // id가 없으면 created_at을 id로 사용
+      }));
+      return dreams;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
   },
 
-  // 특정 꿈 정보 가져오기
-  getDream: async (userId, dreamId) => {
+  // 특정 꿈 정보 가져오기 - created_at을 사용하도록 수정
+  getDream: async (userId, dreamIdOrCreatedAt) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/${dreamId}`, {
+      const token = localStorage.getItem('token');
+      // created_at 형식인지 확인 (ISO8601 형식이면 created_at으로 간주)
+      const isCreatedAt = typeof dreamIdOrCreatedAt === 'string' && 
+                          dreamIdOrCreatedAt.includes('T') && 
+                          !isNaN(new Date(dreamIdOrCreatedAt).getTime());
+
+      // URL 경로 결정 (ISO8601 형식이면 created_at 경로 사용)
+      const url = isCreatedAt 
+        ? `${API_BASE_URL}/user/${userId}/dream/${encodeURIComponent(dreamIdOrCreatedAt)}`
+        : `${API_BASE_URL}/user/${userId}/dream/${dreamIdOrCreatedAt}`;
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': token ? `Bearer ${token}` : ''
         }
       });
       if (!response.ok) {
         throw new Error('Failed to get dream');
       }
-      return await response.json();
+      const data = await response.json();
+      // id 필드가 없으면 created_at을 id로 추가
+      if (!data.id && data.created_at) {
+        data.id = data.created_at;
+      }
+      return data;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
   },
 
-  // 초기 분석 결과 가져오기
-  getDreamAnalysis: async (userId, dreamId) => {
+  // 초기 분석 결과 가져오기 - created_at을 사용하도록 수정
+  getDreamAnalysis: async (userId, dreamIdOrCreatedAt) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/${dreamId}/analysis`, {
+      const token = localStorage.getItem('token');
+      // created_at 형식인지 확인 (ISO8601 형식이면 created_at으로 간주)
+      const isCreatedAt = typeof dreamIdOrCreatedAt === 'string' && 
+                          dreamIdOrCreatedAt.includes('T') && 
+                          !isNaN(new Date(dreamIdOrCreatedAt).getTime());
+
+      // URL 경로 결정
+      const url = isCreatedAt 
+        ? `${API_BASE_URL}/user/${userId}/dream/${encodeURIComponent(dreamIdOrCreatedAt)}/analysis`
+        : `${API_BASE_URL}/user/${userId}/dream/${dreamIdOrCreatedAt}/analysis`;
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': token ? `Bearer ${token}` : ''
         }
       });
       if (!response.ok) {
@@ -176,14 +228,25 @@ export const dreamService = {
     }
   },
 
-  // 채팅 메시지 전송 및 응답 받기
-  sendChatMessage: async (userId, dreamId, message) => {
+  // 채팅 메시지 전송 및 응답 받기 - created_at을 사용하도록 수정
+  sendChatMessage: async (userId, dreamIdOrCreatedAt, message) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/dream/${dreamId}/chat`, {
+      const token = localStorage.getItem('token');
+      // created_at 형식인지 확인 (ISO8601 형식이면 created_at으로 간주)
+      const isCreatedAt = typeof dreamIdOrCreatedAt === 'string' && 
+                          dreamIdOrCreatedAt.includes('T') && 
+                          !isNaN(new Date(dreamIdOrCreatedAt).getTime());
+
+      // URL 경로 결정
+      const url = isCreatedAt 
+        ? `${API_BASE_URL}/user/${userId}/dream/${encodeURIComponent(dreamIdOrCreatedAt)}/chat`
+        : `${API_BASE_URL}/user/${userId}/dream/${dreamIdOrCreatedAt}/chat`;
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({ message })
       });

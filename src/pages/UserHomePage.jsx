@@ -13,8 +13,9 @@ function UserHomePage({ currentUser, setCurrentUser }) {
     // 사용자의 꿈 기록 가져오기
     const fetchDreamHistory = async () => {
       try {
-        const history = await dreamService.getDreamHistory(userId);
-        setDreamHistory(history);
+        const response = await dreamService.getDreamHistory(userId);
+        // response.dreams 에서 배열을 가져옵니다
+        setDreamHistory(response.dreams || []);
       } catch (error) {
         console.error('Failed to load dream history:', error);
       } finally {
@@ -31,14 +32,19 @@ function UserHomePage({ currentUser, setCurrentUser }) {
   };
 
   const handleDreamSubmit = async (result) => {
-    // 꿈 기록 갱신
     try {
-      const history = await dreamService.getDreamHistory(userId);
-      setDreamHistory(history);
+      console.log("파일 업로드 결과:", result);
+
+      // dreamId 추출 (백엔드 응답에 따라 달라질 수 있음)
+      const dreamId = result.id || result.created_at;
+
+      // 꿈 기록 갱신
+      const historyResponse = await dreamService.getDreamHistory(userId);
+      setDreamHistory(historyResponse.dreams || []);
 
       // 새로 생성된 꿈의 분석 페이지로 이동
-      if (result && result.id) {
-        navigate(`/user/${userId}/dream/${result.id}`);
+      if (dreamId) {
+        navigate(`/user/${userId}/dream/${dreamId}`);
       }
     } catch (error) {
       console.error('Failed to update dream history:', error);
@@ -53,18 +59,19 @@ function UserHomePage({ currentUser, setCurrentUser }) {
   return (
     <div className="user-home">
       <header className="user-header">
-        <h1>DreamInsight</h1>
+        <div className="site-title">
+          <img src="/dreams-insight-logo.png" alt="DreamsInsight" className="logo-image-small" />
+          <h1>DreamsInsight</h1> {/* 이 텍스트는 CSS로 숨겨지지만 접근성을 위해 유지 */}
+        </div>
         <div className="user-actions">
           <span className="welcome-message">안녕하세요, {currentUser.username}님</span>
           <button onClick={handleLogout} className="logout-button">로그아웃</button>
         </div>
       </header>
-
       <section className="dream-entry-section">
         <h2>꿈 일기 작성</h2>
         <DreamEntryForm onSuccess={handleDreamSubmit} userId={userId} />
       </section>
-
       <section className="dream-history-section">
         <h2>나의 꿈 기록</h2>
         {loading ? (

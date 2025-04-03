@@ -21,6 +21,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "netlify": "^13.3.4",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.4.1"
   }

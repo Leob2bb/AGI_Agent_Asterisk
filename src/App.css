@@ -1,4 +1,23 @@
 /* App.css */
+/* 둥글둥글한 글씨체 적용 */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
+
+/* 색상 변수 추가 - 로고 색상 기반 */
+:root {
+  --primary-gradient-start: #5D4FB7;  /* 보라색 */
+  --primary-gradient-end: #3A4CD8;    /* 파란색 */
+  --primary-color: #4645d2;
+  --primary-light: #E8E6FF;
+  --primary-dark: #3A3AC8;
+  --accent-color: #9C89FF;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --background-light: #F9FAFF;
+  --card-background: #FFFFFF;
+  --border-color: #E5E7EB;
+  --box-shadow: 0 4px 12px rgba(93, 79, 183, 0.1);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,10 +25,15 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Nunito', 'Noto Sans KR', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   color: #333;
-  background-color: #f5f5f5;
+  background-color: var(--background-light);
+}
+
+/* 입력 요소에도 동일한 글씨체 적용 */
+input, textarea, button, select {
+  font-family: 'Nunito', 'Noto Sans KR', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .App {
@@ -47,7 +71,7 @@ main {
 }
 
 .page-header h1 {
-  color: #4a4ad8;
+  color: var(--primary-color);
   margin-bottom: 10px;
 }
 
@@ -55,8 +79,14 @@ main {
 .dream-form-container {
   background: white;
   padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: var(--box-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dream-form-container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(93, 79, 183, 0.15);
 }
 
 .entry-method-toggle {
@@ -76,7 +106,7 @@ main {
 }
 
 .toggle-button.active {
-  background-color: #4a4ad8;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
   color: white;
   font-weight: bold;
 }
@@ -106,20 +136,22 @@ main {
 }
 
 .submit-button {
-  background-color: #4a4ad8;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
   color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
   width: 100%;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .submit-button:hover {
-  background-color: #3a3abc;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-dark));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(93, 79, 183, 0.2);
 }
 
 /* 파일 업로더 스타일링 */
@@ -152,7 +184,6 @@ main {
   color: #e60000;
   margin-top: 8px;
 }
-/* 기존 CSS에 추가 */
 
 /* 인증 페이지 스타일 */
 .auth-page {
@@ -164,17 +195,18 @@ main {
 
 .auth-container {
   background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: var(--box-shadow);
   width: 100%;
   max-width: 400px;
+  margin: 2rem auto;
 }
 
 .auth-container h1 {
   text-align: center;
   margin-bottom: 20px;
-  color: #4a4ad8;
+  color: var(--primary-color);
 }
 
 .auth-switch {
@@ -185,7 +217,7 @@ main {
 .auth-switch button {
   background: none;
   border: none;
-  color: #4a4ad8;
+  color: var(--primary-color);
   cursor: pointer;
   font-weight: bold;
 }
@@ -198,15 +230,6 @@ main {
   align-items: center;
 }
 
-.logout-button {
-  margin-left: 10px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
 /* 로고 및 헤더 스타일 */
 .logo-header {
   text-align: center;
@@ -214,7 +237,7 @@ main {
 }
 
 .logo-header h1 {
-  color: #4a4ad8;
+  color: var(--primary-color);
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
@@ -222,16 +245,6 @@ main {
 .tagline {
   color: #666;
   font-size: 1rem;
-}
-
-.auth-container {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  margin: 2rem auto;
 }
 
 .auth-container h2 {
@@ -242,7 +255,7 @@ main {
 }
 
 .auth-link {
-  color: #4a4ad8;
+  color: var(--primary-color);
   text-decoration: none;
   font-weight: bold;
 }
@@ -273,68 +286,63 @@ main {
 }
 
 .login-form input:focus {
-  border-color: #4a4ad8;
+  border-color: var(--primary-color);
   outline: none;
   box-shadow: 0 0 0 2px rgba(74, 74, 216, 0.2);
-}
-
-.submit-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #4a4ad8;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 1rem;
-}
-
-.submit-button:hover {
-  background-color: #3a3ac8;
 }
 
 .submit-button:disabled {
   background-color: #a0a0e0;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
+
+/* 헤더 배경색을 밝은 색으로 변경 */
 .user-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background-color: #4a4ad8;
-  color: white;
+  padding: 1.2rem;
+  background: white;  /* 밝은 배경으로 변경 */
+  color: var(--primary-color);  /* 텍스트 색상 변경 */
   margin-bottom: 2rem;
+  border-radius: 0 0 16px 16px;
+  box-shadow: var(--box-shadow);
+  border-top: 5px solid var(--primary-gradient-start); /* 상단에 색상 포인트 추가 */
 }
 
+/* 헤더 내 제목 색상 변경 */
 .user-header h1 {
   margin: 0;
+  color: var(--primary-color);  /* 어두운 텍스트 색상으로 변경 */
 }
 
-.user-actions {
-  display: flex;
-  align-items: center;
-}
-
+/* 환영 메시지 색상 변경 */
 .welcome-message {
   margin-right: 1rem;
+  color: var(--primary-color);  /* 어두운 색상으로 변경 */
+  font-weight: 500;
 }
 
+/* 로그아웃 버튼 스타일 변경 */
 .logout-button {
-  background-color: rgba(255, 255, 255, 0.2);
+  margin-left: 10px;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
   border: none;
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .logout-button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(93, 79, 183, 0.2);
 }
+
 /* 파일 업로더 스타일 개선 */
 .file-uploader {
   margin-bottom: 20px;
@@ -351,17 +359,17 @@ main {
 }
 
 .drop-area:hover {
-  border-color: #4a4ad8;
-  background-color: #f5f5ff;
+  border-color: var(--primary-color);
+  background-color: var(--primary-light);
 }
 
 .drop-area.has-file {
-  border-color: #4a4ad8;
-  background-color: #f5f5ff;
+  border-color: var(--primary-color);
+  background-color: var(--primary-light);
 }
 
 .upload-button {
-  background-color: #4a4ad8;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
   color: white;
   border: none;
   padding: 10px 20px;
@@ -372,7 +380,7 @@ main {
 }
 
 .upload-button:hover {
-  background-color: #3a3abc;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-dark));
 }
 
 .file-info {
@@ -404,10 +412,6 @@ main {
   background-color: #e60000;
 }
 
-.error-message {
-  color: #e60000;
-  margin-top: 8px;
-}
 /* App.css에 추가 */
 .analysis-page {
   max-width: 800px;
@@ -422,7 +426,7 @@ main {
 .back-button {
   background: none;
   border: none;
-  color: #4a4ad8;
+  color: var(--primary-color);
   font-size: 16px;
   cursor: pointer;
   padding: 0;
@@ -437,8 +441,8 @@ main {
 .dream-content-container {
   background: white;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 16px;
+  box-shadow: var(--box-shadow);
   margin-bottom: 30px;
 }
 
@@ -449,8 +453,14 @@ main {
 .analysis-container {
   background: white;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 16px;
+  box-shadow: var(--box-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.analysis-container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(93, 79, 183, 0.15);
 }
 
 /* 채팅 인터페이스 스타일 개선 */
@@ -510,7 +520,7 @@ main {
 
 .message.user {
   float: right;
-  background-color: #4a4ad8;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
   color: white;
   margin-left: auto;
   border-bottom-right-radius: 4px;
@@ -572,7 +582,7 @@ main {
   width: 8px;
   height: 8px;
   margin: 0 3px;
-  background-color: #4a4ad8;
+  background-color: var(--accent-color);
   border-radius: 50%;
   display: inline-block;
   opacity: 0.6;
@@ -611,13 +621,13 @@ main {
 
 .chat-input-form input:focus {
   outline: none;
-  border-color: #4a4ad8;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(74, 74, 216, 0.2);
   background-color: white;
 }
 
 .chat-input-form button {
-  background-color: #4a4ad8;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
   color: white;
   border: none;
   border-radius: 50%;
@@ -628,13 +638,14 @@ main {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .chat-input-form button:hover:not(:disabled) {
-  background-color: #3a3ac8;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-dark));
   transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(93, 79, 183, 0.2);
 }
 
 .chat-input-form button:disabled {
@@ -678,7 +689,7 @@ main {
 
 .message.user::before {
   right: -6px;
-  border-left: 12px solid #4a4ad8;
+  border-left: 12px solid var(--primary-gradient-end);
   border-bottom-left-radius: 12px;
   display: none; /* 선택적으로 추가 */
 }
@@ -703,7 +714,7 @@ main {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: #4a4ad8;
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -711,6 +722,7 @@ main {
   font-size: 12px;
   font-weight: bold;
 }
+
 /* 통합된 분석과 채팅 UI를 위한 스타일 */
 .dream-analysis-container {
   display: flex;
@@ -722,7 +734,7 @@ main {
   background-color: white;
   border-radius: 12px;
   padding: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--box-shadow);
 }
 
 .emotions-container, .symbols-container {
@@ -750,11 +762,101 @@ main {
 }
 
 .emotion-tag {
-  background-color: #e8f0fe;
-  color: #3367d6;
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
 }
 
 .symbol-tag {
   background-color: #fdf2e9;
   color: #e67e22;
+}
+
+/* 사이트 제목 색상 변경 */
+.site-title {
+  display: flex;
+  align-items: center;
+  font-family: 'Nunito', sans-serif;
+  color: var(--primary-color);  /* 어두운 색상으로 변경 */
+  text-decoration: none;
+}
+
+/* 꿈 기록 항목 스타일 */
+.dream-item {
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(93, 79, 183, 0.08);
+  transition: transform 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid var(--accent-color);
+}
+
+.dream-item:hover {
+  transform: translateX(4px);
+}
+
+/* 분석 결과 버튼 */
+.view-button {
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.view-button:hover {
+  background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-dark));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(93, 79, 183, 0.2);
+}
+
+/* 섹션 제목 스타일 */
+section h2 {
+  color: var(--primary-color);
+  margin-bottom: 1.2rem;
+  font-weight: 600;
+  position: relative;
+}
+
+section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-gradient-start), var(--primary-gradient-end));
+  border-radius: 3px;
+}
+
+/* 로고 이미지 크기 조정 - 로그인 페이지에서는 크게 */
+.logo-image-large {
+  width: 350px;       /* 로그인 페이지에서 고정 너비 (큰 크기) */
+  height: auto;       /* 비율 유지 */
+  margin-bottom: 25px;
+}
+
+@media (max-width: 480px) {
+  .logo-image-large {
+    width: 280px;     /* 모바일에서는 약간 작게 */
+  }
+}
+
+/* 헤더 내 작은 로고 이미지 */
+/* 헤더의 로고 크기 증가 */
+.logo-image-small {
+  height: 45px;  /* 35px에서 45px로 증가 */
+  margin-right: 0; /* 텍스트가 없으니 여백 제거 */
+}
+
+/* site-title 클래스 수정 - 텍스트 숨김 */
+.site-title h1 {
+  display: none; /* 헤더의 "DreamsInsight" 텍스트 숨김 */
 }

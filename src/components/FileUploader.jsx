@@ -1,9 +1,13 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { dreamService } from '../services/api';
+import { authService } from '../services/api';
 
-function FileUploader({ onFileSelect }) {
+function FileUploader({ onFileSelect, title, date }) {
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const allowedTypes = [
     'application/pdf',
@@ -12,25 +16,21 @@ function FileUploader({ onFileSelect }) {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-
     if (!selectedFile) {
       return;
     }
-
     // 파일 타입 검증
     if (!allowedTypes.includes(selectedFile.type)) {
       setError('PDF 또는 TXT 파일만 업로드 가능합니다.');
       setFile(null);
       return;
     }
-
     // 파일 크기 제한 (10MB)
     if (selectedFile.size > 10 * 1024 * 1024) {
       setError('파일 크기는 10MB 이하여야 합니다.');
       setFile(null);
       return;
     }
-
     setError('');
     setFile(selectedFile);
     onFileSelect(selectedFile);
@@ -44,26 +44,21 @@ function FileUploader({ onFileSelect }) {
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
     const droppedFile = e.dataTransfer.files[0];
-
     if (!droppedFile) {
       return;
     }
-
     if (!allowedTypes.includes(droppedFile.type)) {
       setError('PDF 또는 TXT 파일만 업로드 가능합니다.');
       setFile(null);
       return;
     }
-
     // 파일 크기 제한 (10MB)
     if (droppedFile.size > 10 * 1024 * 1024) {
       setError('파일 크기는 10MB 이하여야 합니다.');
       setFile(null);
       return;
     }
-
     setError('');
     setFile(droppedFile);
     onFileSelect(droppedFile);
@@ -117,7 +112,6 @@ function FileUploader({ onFileSelect }) {
           </div>
         )}
       </div>
-
       {error && <div className="error-message">{error}</div>}
     </div>
   );

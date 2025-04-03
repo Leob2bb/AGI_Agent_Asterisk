@@ -7,7 +7,7 @@ function LoginPage({ setCurrentUser }) {
     <div className="auth-page">
       <div className="auth-container">
         <div className="logo-header">
-          <h1>DreamInsight</h1>
+          <img src="/dreams-insight-logo.png" alt="DreamsInsight" className="logo-image-large" />
           <p className="tagline">AI 꿈 분석 서비스</p>
         </div>
 
