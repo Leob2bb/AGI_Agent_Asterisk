@@ -402,9 +402,16 @@ def get_dream_analysis(user_id, dream_id):
         emotions_data = dream.emotions
         app.logger.info(f"emotions = {emotions_data}")
 
+        # 문자열일 경우 JSON 파싱
         if not emotions_data:
-            emotions_data = json.dumps({"emotions": []})
-            
+            emotions_data = {}
+        elif isinstance(emotions_data, str):
+            try:
+                emotions_data = json.loads(emotions_data)
+            except Exception as e:
+                app.logger.error(f"emotions_data JSON 파싱 실패: {e}")
+                emotions_data = {}
+                
         # 감정 분석
         app.logger.info("감정 분석 시작!")
 

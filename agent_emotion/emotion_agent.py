@@ -2,6 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from agent_emotion import label_map, negative_emotions, help_resources  # 공통 상수 가져오기
+import json
 
 # 환경 변수 로드
 load_dotenv()
@@ -12,10 +13,17 @@ class EmotionAgent:
         :param emotion_scores: {"joy": 0.8, "sadness": 0.2, ...}
         :param dream_summary: 꿈의 핵심 내용 요약 (문자열)
         """
+        if isinstance(emotion_scores, str):
+            try:
+                emotion_scores = json.loads(emotion_scores)
+            except Exception as e:
+                print(f"[EmotionAgent] JSON parsing failed: {e}")
+                emotion_scores = {}
+
         self.emotions = [{"label": label, "score": score} for label, score in emotion_scores.items()]
         self.dream_summary = dream_summary
 
-    def analyze_emotions(self):
+    def analyze_emotions_agent(self):
         # 부정 감정 점수가 높은 항목 개수 계산
         negative_count = sum(
             1 for e in self.emotions if e["label"] in negative_emotions and e["score"] > 0.5
