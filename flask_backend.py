@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from dateutil import parser
 import urllib.parse
+import re
 # import json
 
 from flask_sqlalchemy import SQLAlchemy
@@ -23,9 +24,10 @@ from batch_parse import process_pdfs
 # 감정 분석 AGENT 클래스 참조
 from agent_emotion.emotion_agent import EmotionAgent
 # emotion_analysis.py 참조
-from emotion_analysis import process_qdrant_document
+from emotion_analysis import process_qdrant_document, text_combining, analyze_emotions
 # symbol agent 참조
-from agent_symbol import symbol_agent
+from agent_symbol.symbol_agent import analyze_symbols_and_intentions
+
 
 # 환경 변수 로드 (.env에 키들 있어야 함)
 load_dotenv()
@@ -280,12 +282,6 @@ def submit_dream_file(user_id):
         
         # 감정 분석 기본값
         emotions = json.dumps({"emotions": []})
-
-        try:
-            # 실제 감정 분석 시도
-            emotions = process_qdrant_document(user_id, title)
-        except Exception as e:
-            app.logger.error(f"감정 분석 중 오류 발생: {str(e)}")
             
     except Exception as e:
         return jsonify({'error': f'파일 처리 중 오류 발생: {str(e)}'}), 500
@@ -364,7 +360,7 @@ def get_dream(user_id, dream_id):
 
 
 @app.route('/user/<string:user_id>/dream/<string:dream_id>/analysis', methods=['GET'])
-def get_dream_analysis(user_id, dream_id):
+def get_dream_analysis(user_id, dream_id, title):
     # dream_id 처리 로직 개선
     # UUID와 created_at 두 가지 형식 모두 지원하도록 수정
     app.logger.info(f"Get dream request - User ID: {user_id}, Dream ID: {dream_id}")
@@ -388,23 +384,27 @@ def get_dream_analysis(user_id, dream_id):
             emotions_data = json.dumps({"emotions": []})
             
         # 감정 분석
-        app.logger.info("감정 분석 시작")
+        app.logger.info("감정 분석 시작!")
 
+        # 분석 방법 1
+        # emotions = process_qdrant_document(user_id, title)
+        # combined_text = text_combining(user_id, title)
+        # emotions = analyze_emotions(combined_text)
+        # app.logger.info(f'emotions = {emotions}')
+        
+        # 분석 방법 2
         agent_e = EmotionAgent(emotions_data)
         prompt_e = agent_e.create_llm_prompt(dream.content)
         raw_analysis_emotion = agent_e.call_solar_llm(prompt_e)
         
-        # 심볼 분석
-        #  5: 내용이 없는 경우 기본값 처리
-        
+        # 심볼 분석, 내용이 없는 경우 기본값 처리
         content = dream.content or ""
         app.logger.info(f"content = {content}")
 
-        
         # "symbols", "intentions"
-        formatted_response_symbol = symbol_agent.analyze_symbols_and_intentions(content)
+        formatted_response_symbol = analyze_symbols_and_intentions(content)
         
-        # 프론트엔드 형식에 맞게 변환
+        # "analysis-emotions", "emotions"
         formatted_response_emotion = {
             "analysis-emotions": raw_analysis_emotion.get("analysis", "분석 결과를 불러올 수 없습니다."),
             "emotions": raw_analysis_emotion.get("emotions", [])
@@ -414,7 +414,7 @@ def get_dream_analysis(user_id, dream_id):
         combined_response = {**formatted_response_emotion, **formatted_response_symbol}
         
         # 응답에 dream ID 정보 추가하여 프론트엔드 호환성 유지
-        combined_response["dreamId"] = dream.id
+        combined_response["dreamId"] = dream.dream_id
         combined_response["id"] = dream.id
         app.logger.info(f"combined_response = {combined_response}")
         
