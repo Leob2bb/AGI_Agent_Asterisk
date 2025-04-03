@@ -507,21 +507,22 @@ def process_chat_message(user_id, dream_id):
             "content": "너는 꿈 해석과 심리 상담에 특화된 AI야. 사용자와 친절하게 대화해줘."
         })
 
-    
+    app.logger.info(f"사용자가 입력한 메시지: {user_message}")
     chat_history[chat_key].append({"role": "user", "content": user_message})
 
-    MAX_HISTORY = 20
     # 마지막 MAX_HISTORY개만 유지
+    MAX_HISTORY = 20
     if len(chat_history[chat_key]) > MAX_HISTORY:
         chat_history[chat_key] = [chat_history[chat_key][0]] + chat_history[chat_key][-MAX_HISTORY:]
 
-        
+
     try:
         ai_reply = call_solar_chat(chat_history[chat_key])
         if not ai_reply:
-            return jsonify({"error": "AI 응답을 받지 못했습니다."}), 500
             app.logger.info("ai 응답 실패...")
+            return jsonify({"error": "AI 응답을 받지 못했습니다."}), 500
         # AI 응답도 대화 이력에 추가
+        app.logger.info(f"사용자가 입력한 메시지: {ai_reply}")
         chat_history[chat_key].append({"role": "assistant", "content": ai_reply})
         return jsonify({"response": ai_reply})
 

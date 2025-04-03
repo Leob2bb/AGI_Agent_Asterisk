@@ -1,6 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+import json
 
 import base64
 import json
@@ -42,29 +43,87 @@ def encode_img_to_base64(img_path):
         return base64_data
  
 # Schema generation request
-def schema_generation_auto(base64_data):
-    schema_response = client.chat.completions.create(
-        model="information-extract",
-        messages=[
+def schema_generation_auto(img_path):
+    url = "https://api.upstage.ai/v1/information-extraction"
+    headers = {
+        "Authorization": f"Bearer {UPSTAGE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    base64_data = encode_img_to_base64(img_path)
+    mime_type = "image/jpeg" if img_path.lower().endswith((".jpg", ".jpeg")) else "image/png"
+
+    data = {
+        "model": "information-extract",
+        "messages": [
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "image_url",
-                        "image_url": f"data:image/png;base64,{base64_data}"
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{base64_data}"
+                        }
                     }
                 ]
             }
         ],
-    )
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "dream_diary_schema",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                        "type": "string",
+                        "description": "꿈의 제목"
+                        },
+                        "date": {
+                            "type": "string",
+                            "description": "꿈을 꾼 날짜 (예: 2024-03-10)"
+                        },
+                        "emotion": {
+                            "type": "string",
+                            "description": "꿈을 통해 느낀 주요 감정 (예: 공포, 기쁨, 혼란 등)"
+                        },
+                        "characters": {
+                            "type": "array",
+                            "description": "꿈에 등장한 인물 목록",
+                            "items": {"type": "string"}
+                        },
+                        "actions": {
+                            "type": "array",
+                            "description": "꿈 속에서 벌어진 주요 행동",
+                            "items": {"type": "string"}
+                        },
+                        "backgrounds": {
+                            "type": "array",
+                            "description": "꿈에서 배경이 된 장소나 환경 (예: 학교, 숲, 불타는 건물 등)",
+                            "items": {"type": "string"}
+                        }
+                    },
+                    "required": ["title", "date", "emotion", "characters", "actions", "backgrounds"]
+                }
+            }
+        }
+    }
 
-    # 자동 생성된 schema -> 보고 수정 필요
+    response = requests.post(url, headers=headers, json=data)
+
     try:
-        schema = json.loads(schema_response.choices[0].message.content)
-        print(json.dumps(schema, indent=4, ensure_ascii=False))
-    except json.JSONDecodeError:
-        print("Error: API 응답을 JSON으로 변환할 수 없습니다.")
-        print("응답 내용:", schema_response.choices[0].message.content)
+        result = response.json()
+        if response.status_code == 200:
+            print(json.dumps(result, indent=4, ensure_ascii=False))
+        else:
+            print(f"❌ 오류 발생 (status code {response.status_code})")
+            print(json.dumps(result, indent=4, ensure_ascii=False))
+    except Exception as e:
+        print("❌ JSON 디코딩 실패:", e)
+        print("응답 원문:", response.text)
+
+
+
     
 
 # Use clear key names and descriptions: Providing clear and descriptive key names and descriptions significantly improves the accuracy of data extraction.
@@ -82,24 +141,81 @@ def information_extraction(base64_data):
                 "content": [
                     {
                         "type": "image_url",
-                        "image_url": f"data:image/png;base64,{base64_data}"
+                        "image_url":{
+                            "url": f"data:image/png;base64,{base64_data}"
+                            }
                     }
                 ]
             }
         ],
-        response_format="json"
-    )
+        response = client.chat.completions.create(
+    model="information-extract",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_data}"
+                    }
+                }
+            ]
+        }
+    ],
+    response_format={
+        "type": "json_schema",
+        "json_schema": {
+            "name": "dream_diary_schema",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "꿈의 제목"
+                    },
+                    "date": {
+                        "type": "string",
+                        "description": "꿈을 꾼 날짜"
+                    },
+                    "emotion": {
+                        "type": "string",
+                        "description": "꿈에서 느낀 감정"
+                    },
+                    "characters": {
+                        "type": "array",
+                        "description": "등장 인물",
+                        "items": { "type": "string" }
+                    },
+                    "actions": {
+                        "type": "array",
+                        "description": "주요 행동",
+                        "items": { "type": "string" }
+                    },
+                    "backgrounds": {
+                        "type": "array",
+                        "description": "꿈의 배경/장소",
+                        "items": { "type": "string" }
+                    }
+                },
+                "required": ["title", "date", "emotion", "characters", "actions", "backgrounds"]
+            }
+        }
+    }
+)
+
+
+)
+    
 
     print(extraction_response.choices[0].message.content)
 
 if __name__ == "__main__":
-    # img_path = "D:/Yonsei_2025/Side_Project/agi_agent_hackathon_3/diary_template/diary_pink.pdf"
-    img_path = "D:/Yonsei_2025/Side_Project/agi_agent_hackathon_3/diary_template/Diary1.png"
+    img_path = "D:/agi_asterisk_master/grimdiary.jpg"
 
-    # 🔥 FIXED: PDF 파일이 이미지가 아니라서 API가 지원하지 않을 가능성 높음 -> PNG 등으로 변환 필요
     if not img_path.lower().endswith((".png", ".jpg", ".jpeg")):
-        
-        print("⚠️ Error: 지원되지 않는 파일 형식입니다. PNG 또는 JPG 이미지로 변환하세요.")
+        print("⚠️ Error: PNG 또는 JPG 이미지로 변환하세요.")
+    elif not os.path.exists(img_path):
+        print("❌ 파일이 존재하지 않습니다:", img_path)
     else:
-        base64_data = encode_img_to_base64(img_path)
-        schema_generation_auto(base64_data)
+        schema_generation_auto(img_path)
