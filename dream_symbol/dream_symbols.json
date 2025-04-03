@@ -1,0 +1,321 @@
+[
+  {
+    "keywords": [
+      "물",
+      "water"
+    ],
+    "object": "물 / water",
+    "meanings": {
+      "ko": "감정, 무의식",
+      "en": "emotion, unconsciousness"
+    }
+  },
+  {
+    "keywords": [
+      "바다",
+      "sea"
+    ],
+    "object": "바다 / sea",
+    "meanings": {
+      "ko": "광대한 감정, 무의식",
+      "en": "vast emotion, unconsciousness"
+    }
+  },
+  {
+    "keywords": [
+      "불",
+      "fire"
+    ],
+    "object": "불 / fire",
+    "meanings": {
+      "ko": "파괴, 정화, 열정",
+      "en": "destruction, purification, passion"
+    }
+  },
+  {
+    "keywords": [
+      "산",
+      "mountain"
+    ],
+    "object": "산 / mountain",
+    "meanings": {
+      "ko": "도전, 극복, 자기 성장",
+      "en": "challenge, overcoming, personal growth"
+    }
+  },
+  {
+    "keywords": [
+      "절벽",
+      "cliff"
+    ],
+    "object": "절벽 / cliff",
+    "meanings": {
+      "ko": "위기, 선택의 갈림길",
+      "en": "crisis, decision point"
+    }
+  },
+  {
+    "keywords": [
+      "하늘",
+      "sky"
+    ],
+    "object": "하늘 / sky",
+    "meanings": {
+      "ko": "정신적 확장, 희망",
+      "en": "spiritual expansion, hope"
+    }
+  },
+  {
+    "keywords": [
+      "어둠",
+      "darkness"
+    ],
+    "object": "어둠 / darkness",
+    "meanings": {
+      "ko": "불안, 미지, 감정 억눌림",
+      "en": "anxiety, unknown, repressed emotion"
+    }
+  },
+  {
+    "keywords": [
+      "빛",
+      "light"
+    ],
+    "object": "빛 / light",
+    "meanings": {
+      "ko": "희망, 진실, 자각",
+      "en": "hope, truth, awareness"
+    }
+  },
+  {
+    "keywords": [
+      "고래",
+      "whale"
+    ],
+    "object": "고래 / whale",
+    "meanings": {
+      "ko": "깊은 감정, 무의식과의 연결",
+      "en": "deep emotion, unconscious connection"
+    }
+  },
+  {
+    "keywords": [
+      "뱀",
+      "snake"
+    ],
+    "object": "뱀 / snake",
+    "meanings": {
+      "ko": "불안, 변화, 치유",
+      "en": "fear, transformation, healing"
+    }
+  },
+  {
+    "keywords": [
+      "호랑이",
+      "tiger"
+    ],
+    "object": "호랑이 / tiger",
+    "meanings": {
+      "ko": "힘, 공격성, 본능",
+      "en": "strength, aggression, instinct"
+    }
+  },
+  {
+    "keywords": [
+      "늑대",
+      "wolf"
+    ],
+    "object": "늑대 / wolf",
+    "meanings": {
+      "ko": "고독, 직관, 본능적 욕구",
+      "en": "loneliness, intuition, primal desire"
+    }
+  },
+  {
+    "keywords": [
+      "새",
+      "bird"
+    ],
+    "object": "새 / bird",
+    "meanings": {
+      "ko": "자유, 정신적 상승",
+      "en": "freedom, spiritual ascent"
+    }
+  },
+  {
+    "keywords": [
+      "거미",
+      "spider"
+    ],
+    "object": "거미 / spider",
+    "meanings": {
+      "ko": "복잡한 감정, 통제 욕구",
+      "en": "complex emotion, desire for control"
+    }
+  },
+  {
+    "keywords": [
+      "나무",
+      "tree"
+    ],
+    "object": "나무 / tree",
+    "meanings": {
+      "ko": "생명력, 자기 성장",
+      "en": "vitality, personal growth"
+    }
+  },
+  {
+    "keywords": [
+      "비",
+      "rain"
+    ],
+    "object": "비 / rain",
+    "meanings": {
+      "ko": "감정 정화, 슬픔, 변화",
+      "en": "emotional cleansing, sadness, change"
+    }
+  },
+  {
+    "keywords": [
+      "떨어짐",
+      "falling"
+    ],
+    "object": "떨어짐 / falling",
+    "meanings": {
+      "ko": "불안, 실패, 통제력 상실",
+      "en": "anxiety, failure, loss of control"
+    }
+  },
+  {
+    "keywords": [
+      "비행",
+      "flying"
+    ],
+    "object": "비행 / flying",
+    "meanings": {
+      "ko": "자유, 도피, 해방",
+      "en": "freedom, escape, liberation"
+    }
+  },
+  {
+    "keywords": [
+      "도망",
+      "running away"
+    ],
+    "object": "도망 / running away",
+    "meanings": {
+      "ko": "문제 회피, 스트레스",
+      "en": "problem avoidance, stress"
+    }
+  },
+  {
+    "keywords": [
+      "죽음",
+      "death"
+    ],
+    "object": "죽음 / death",
+    "meanings": {
+      "ko": "종결, 변화, 새로운 시작",
+      "en": "ending, transformation, new beginning"
+    }
+  },
+  {
+    "keywords": [
+      "아이",
+      "child"
+    ],
+    "object": "아이 / child",
+    "meanings": {
+      "ko": "순수성, 보호 본능",
+      "en": "innocence, protective instinct"
+    }
+  },
+  {
+    "keywords": [
+      "학교",
+      "school"
+    ],
+    "object": "학교 / school",
+    "meanings": {
+      "ko": "학습, 평가, 과거의 압박",
+      "en": "learning, evaluation, past pressure"
+    }
+  },
+  {
+    "keywords": [
+      "병원",
+      "hospital"
+    ],
+    "object": "병원 / hospital",
+    "meanings": {
+      "ko": "치유, 회복, 불안감",
+      "en": "healing, recovery, anxiety"
+    }
+  },
+  {
+    "keywords": [
+      "집",
+      "house"
+    ],
+    "object": "집 / house",
+    "meanings": {
+      "ko": "자기 정체성, 내면세계",
+      "en": "identity, inner world"
+    }
+  },
+  {
+    "keywords": [
+      "길",
+      "road"
+    ],
+    "object": "길 / road",
+    "meanings": {
+      "ko": "인생의 방향, 선택",
+      "en": "life direction, choice"
+    }
+  },
+  {
+    "keywords": [
+      "엄마",
+      "mother"
+    ],
+    "object": "엄마 / mother",
+    "meanings": {
+      "ko": "보호, 의존, 감정 연결",
+      "en": "protection, dependency, emotional bond"
+    }
+  },
+  {
+    "keywords": [
+      "아버지",
+      "father"
+    ],
+    "object": "아버지 / father",
+    "meanings": {
+      "ko": "권위, 보호자, 도전",
+      "en": "authority, protector, challenge"
+    }
+  },
+  {
+    "keywords": [
+      "연인",
+      "lover"
+    ],
+    "object": "연인 / lover",
+    "meanings": {
+      "ko": "애착, 욕망, 관계 갈등",
+      "en": "attachment, desire, relationship conflict"
+    }
+  },
+  {
+    "keywords": [
+      "죽은 사람",
+      "dead person"
+    ],
+    "object": "죽은 사람 / dead person",
+    "meanings": {
+      "ko": "미련, 회한, 과거와의 연결",
+      "en": "regret, lingering past"
+    }
+  }
+]

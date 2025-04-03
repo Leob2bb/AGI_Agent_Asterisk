@@ -6,6 +6,9 @@ import torch
 import os
 import uuid
 
+# 의도, 사물 & 행동 Agent 불러오기
+from dream_symbol.dream_symbol_analysis import analyze_symbols_and_intentions
+
 # ========== 설정 ==========
 EMBEDDING_API_KEY = os.getenv("UPSTAGE_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
@@ -47,7 +50,7 @@ def analyze_emotions(text, threshold=0.3):
     return sorted(results, key=lambda x: x["score"], reverse=True)
 
 # ===== 텍스트 청크 분할 =====
-def split_text_into_chunks(text, max_tokens=4000):
+def split_text_into_chunks(text, max_tokens=1000):
     approx_chunk_size = max_tokens * 4  # 영어 기준 1 token ≈ 4 chars
     return [text[i:i+approx_chunk_size] for i in range(0, len(text), approx_chunk_size)]
 
@@ -64,7 +67,7 @@ def get_embedding(text):
         }
         payload = {
             "model": "embedding-passage",
-            "input": text
+            "input": chunk
         }
         response = requests.post(url, headers=headers, json=payload)
 
@@ -124,6 +127,8 @@ def process_qdrant_document(user_id: str, title: str):
 
     # 감정 분석
     emotions = analyze_emotions(combined_text)
+    # 의도/상징 해석
+    symbolic_result = analyze_symbols_and_intentions(combined_text)
     # 임베딩 생성
     embedding = get_embedding(combined_text)
 
@@ -147,8 +152,10 @@ def process_qdrant_document(user_id: str, title: str):
         payload={
             "user_id": user_id,
             "title": title,
-            "emotions": emotions
+            "emotions": emotions,
             # 사건, 행동 관련 api 분석 결과
+            "symbols": symbolic_result["symbols"],
+            "intentions": symbolic_result["intentions"],
         }
     )
 

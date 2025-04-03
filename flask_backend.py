@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 import os
 # import fitz  # PyMuPDF
 from dotenv import load_dotenv
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 # from langchain.schema import Document
 # from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -36,6 +37,7 @@ load_dotenv()
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 COLLECTION_NAME = "dream-papers"
 
 assert UPSTAGE_API_KEY, ".env에 UPSTAGE_API_KEY가 필요합니다."
@@ -47,6 +49,7 @@ CORS(app)
 # SQLite 데이터베이스 설정
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dreams.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -54,7 +57,7 @@ bcrypt = Bcrypt(app)
 # 최대 파일 크기 제한 10MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
-# print("max_length = ", app.config.get("MAX_CONTENT_LENGTH"))
+jwt = JWTManager(app)
 
 
 # User 모델 정의
@@ -130,6 +133,7 @@ def register():
     db.session.add(user)
     db.session.commit()
     return jsonify({'message': 'User registered successfully'}), 201
+    
 
 
 @app.route('/login', methods=['POST'])
@@ -146,7 +150,14 @@ def login():
         return jsonify({'error': 'Username and password are required'}), 400
 
     user = User.query.filter_by(username=username).first()
+
     if user and bcrypt.check_password_hash(user.password, password):
+        # # 로그인 성공 시 JWT 토큰 발급
+        # access_token = create_access_token(identity=user.id)
+        # return jsonify({
+        #     'message': 'Login successful',
+        #     'access_token': access_token
+        # }), 200
         return jsonify({'id': user.id, 'username': user.username}), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
@@ -240,6 +251,7 @@ def submit_dream_file(user_id):
 
     # emotions 반영해야 함
     return jsonify({
+        'id': dream.id,
         'title': dream.title,
         'date': dream.date,
         'content': dream.content,
