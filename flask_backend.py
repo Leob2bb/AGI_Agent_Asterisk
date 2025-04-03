@@ -216,7 +216,7 @@ def submit_dream_text(user_id):
     emotions = json.dumps({"emotions": []})
 
     dream_id = generate_dream_id(title, user_id, date)
-
+    app.logger(f'dream_id = {dream_id}, user_id = {user_id}')
     dream = Dream(user_id=user_id,
                   title=title,
                   date=date,
@@ -336,7 +336,7 @@ def get_dream(user_id, dream_id):
     #  4: 클라이언트가 기대하는 형식으로 응답 반환
     return jsonify({
         'id': dream.id,
-        'dreamId': dream.id,  # 프론트엔드가 기대하는 필드명
+        'dreamId': dream.user_id,  # 프론트엔드가 기대하는 필드명
         'title': dream.title,
         'date': dream.date,
         'content': dream.content,
