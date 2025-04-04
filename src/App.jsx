@@ -39,9 +39,10 @@ function App() {
               path="/user/:userId" 
               element={!currentUser ? <Navigate to="/login" /> : <UserHomePage currentUser={currentUser} setCurrentUser={setCurrentUser} />} 
             />
+            // App.jsx
             <Route 
-              path="/dream-analysis/:dreamId" 
-              element={!currentUser ? <Navigate to="/login" /> : <AnalysisPage currentUser={currentUser} />} 
+              path="/user/:userId/dream/:dreamId/analysis" 
+              element={<AnalysisPage currentUser={currentUser} />} 
             />
             <Route 
               path="/" 

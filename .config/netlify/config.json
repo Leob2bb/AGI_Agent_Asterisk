@@ -1,0 +1,16 @@
+{
+	"telemetryDisabled": false,
+	"cliId": "36d98eb2-2e31-41b6-9f76-15ed8c753655",
+	"userId": "67ee242b7c9b1e6af968863f",
+	"users": {
+		"67ee242b7c9b1e6af968863f": {
+			"id": "67ee242b7c9b1e6af968863f",
+			"name": "Han TaeBin",
+			"email": "xoqls2822@naver.com",
+			"auth": {
+				"token": "nfc_wq5wvGkAsjFX2dgiPjwxLK8xCBhrVH1re4e5",
+				"github": {}
+			}
+		}
+	}
+}

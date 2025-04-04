@@ -19,7 +19,7 @@ function DreamChatAnalysis({ dreamId, userId, initialDream }) {
         setMessages([
           {
             type: 'analysis',
-            content: data.initialAnalysis || "꿈 분석 결과를 불러올 수 없습니다.",
+            content: data['analysis-emotions'] || "꿈 분석 결과를 불러올 수 없습니다.",
             timestamp: new Date()
           }
         ]);
@@ -81,24 +81,21 @@ function DreamChatAnalysis({ dreamId, userId, initialDream }) {
       {/* 감정 태그와 주요 상징 표시 영역 */}
       {analysis && (
         <div className="analysis-overview">
-          {analysis.emotions && analysis.emotions.length > 0 && (
-            <div className="emotions-container">
-              <h4>감정 분석</h4>
-              <div className="emotion-tags">
-                {analysis.emotions.map((emotion, index) => (
-                  <span key={index} className="emotion-tag">{emotion}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
           {analysis.symbols && analysis.symbols.length > 0 && (
             <div className="symbols-container">
               <h4>주요 상징</h4>
               <div className="symbol-tags">
-                {analysis.symbols.map((symbol, index) => (
-                  <span key={index} className="symbol-tag">{symbol.name}</span>
-                ))}
+                {analysis.symbols.map((symbol, index) => {
+                  // symbol이 객체인 경우 문자열로 변환
+                  const symbolText = typeof symbol === 'object' 
+                    ? symbol.name || symbol.object || '알 수 없는 상징' 
+                    : symbol;
+                  return (
+                    <span key={index} className="symbol-tag">
+                      {symbolText}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -136,7 +133,8 @@ function DreamChatAnalysis({ dreamId, userId, initialDream }) {
             placeholder="꿈에 대해 더 궁금한 점을 질문해보세요..."
             disabled={loading}
           />
-          <button type="submit" disabled={loading || !inputText.trim()}></button>
+          <button type="submit" disabled={loading || !inputText.trim()}>
+          </button>
         </form>
       </div>
     </div>

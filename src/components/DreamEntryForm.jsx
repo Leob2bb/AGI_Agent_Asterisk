@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import FileUploader from './FileUploader';
 import { dreamService } from '../services/api';
-import { useNavigate } from 'react-router-dom'; // Assuming React Router is used
+import { useNavigate } from 'react-router-dom';
 
 function DreamEntryForm({ onSuccess, userId }) {
   const [formData, setFormData] = useState({
@@ -14,7 +14,7 @@ function DreamEntryForm({ onSuccess, userId }) {
   const [isManualEntry, setIsManualEntry] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const navigate = useNavigate(); // Added useNavigate hook
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,7 +41,6 @@ function DreamEntryForm({ onSuccess, userId }) {
     }
   };
 
-  // src/components/DreamEntryForm.jsx의 handleSubmit 함수 수정
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -67,12 +66,13 @@ function DreamEntryForm({ onSuccess, userId }) {
       setDreamFile(null);
       setIsManualEntry(true);
 
-      // 성공 콜백 호출 및 페이지 이동
-      onSuccess(result); // Assuming onSuccess now handles navigation with dreamId
-      if (result && result.dreamId) {
-        navigate(`/dream-analysis/${result.dreamId}`);
-      }
+      // 성공 콜백 호출
+      if (onSuccess) onSuccess(result);
 
+      // 페이지 이동 - 백엔드가 반환하는 값 확인
+      if (result && result.id) {
+        navigate(`/user/${userId}/dream/${result.dreamId}/analysis`);
+      }
 
     } catch (err) {
       console.error('API Error:', err);

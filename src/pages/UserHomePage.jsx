@@ -16,13 +16,10 @@ function UserHomePage({ currentUser, setCurrentUser }) {
   const handleDreamSubmit = async (result) => {
     try {
       console.log("파일 업로드 결과:", result);
-      if (result) {
-        const dreamId = result.id || result.dream_id || result.dreamId;
-        if (dreamId) {
-          console.log("꿈 ID 확인됨:", dreamId);
-          navigate(`/user/${userId}/dream/${dreamId}/analysis`);
-          return;
-        }
+      if (result && result.id) {
+        console.log("꿈 ID 확인됨:", result.id);
+        navigate(`/user/${userId}/dream/${result.id}/analysis`);
+        return;
       }
       console.error('Invalid response:', result);
     } catch (error) {

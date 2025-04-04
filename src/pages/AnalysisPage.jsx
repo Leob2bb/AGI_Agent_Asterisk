@@ -6,6 +6,7 @@ import { dreamService, authService } from '../services/api';
 function AnalysisPage() {
   const { dreamId } = useParams();
   const [dream, setDream] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // ✅ 추가
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -13,14 +14,14 @@ function AnalysisPage() {
   useEffect(() => {
     const fetchDream = async () => {
       try {
-        // 현재 로그인된 사용자 정보 가져오기
-        const currentUser = authService.getCurrentUser();
-        if (!currentUser) {
+        const user = authService.getCurrentUser();
+        if (!user) {
           navigate('/login');
           return;
         }
 
-        const result = await dreamService.getDream(currentUser.id, dreamId);
+        setCurrentUser(user); // ✅ 저장
+        const result = await dreamService.getDream(user.username, dreamId);
         setDream(result);
       } catch (err) {
         setError('꿈 정보를 불러오는데 실패했습니다.');
@@ -33,17 +34,13 @@ function AnalysisPage() {
   }, [dreamId, navigate]);
 
   const handleBackToHome = () => {
-    const currentUser = authService.getCurrentUser();
-    navigate(`/user/${currentUser.username}`);
+    if (currentUser) {
+      navigate(`/user/${currentUser.username}`);
+    }
   };
 
-  if (loading) {
-    return <div className="loading">정보를 불러오는 중...</div>;
-  }
-
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
+  if (loading) return <div className="loading">정보를 불러오는 중...</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <div className="analysis-page">
@@ -51,16 +48,17 @@ function AnalysisPage() {
         <button onClick={handleBackToHome} className="back-button">
           &larr; 홈으로 돌아가기
         </button>
-        <h1>꿈 분석: {dream?.title}</h1>
+        <h1>꿈 분석</h1>
         <p className="dream-date">{dream?.date}</p>
       </div>
       <div className="analysis-container">
-        {/* dream 객체를 통째로 전달하여 DreamChatAnalysis에서 필요한 정보 활용 */}
-        <DreamChatAnalysis 
-          dreamId={dreamId} 
-          userId={dream?.user_id || authService.getCurrentUser().id} 
-          initialDream={dream} 
-        />
+        {currentUser && (
+          <DreamChatAnalysis 
+            dreamId={dreamId} 
+            userId={currentUser.username} 
+            initialDream={dream} 
+          />
+        )}
       </div>
     </div>
   );
