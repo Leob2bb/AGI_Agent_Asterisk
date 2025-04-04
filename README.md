@@ -29,8 +29,8 @@
 - Users can upload dream journals via text or file.
 - All dream entries can be viewed and managed within the platform.
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/a2ad2474-81ea-4743-9ea4-377a30509979" width="280"/>
-  <img src="https://github.com/user-attachments/assets/4f28c24f-cf5e-4a28-9922-6e7111698bef" width="370"/>
+  <img src="https://github.com/user-attachments/assets/a2ad2474-81ea-4743-9ea4-377a30509979" width="320"/>
+  <img src="https://github.com/user-attachments/assets/3eaee2c6-e58f-4887-a0f3-9f5bfea35cae" width="370"/>
 </p>
 
 ### 🧬 Personalized Psychological Feedback
