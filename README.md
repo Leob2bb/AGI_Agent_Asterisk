@@ -1,106 +1,90 @@
-#  **DreamInsight** 🧠
+# ✨ DreamInsight 🧠
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/31b25270-fa6f-46cd-9f75-d6dc0b8d7a08" alt="DreamInsights Banner" width="20%" />
 </p>
 
-## 📖 프로젝트 소개
-### 🔍당신의 꿈은 무엇을 말하고 있을까요?
-#### DreamInsight는 사용자의 꿈 일기를 분석하여 심리 상태를 해석하고 사용자에게 피드백을 제공하는 꿈 해석 시스템입니다.
+<p align="center">
+  🌙 Discover the hidden messages in your dreams through AI-powered psychological analysis.  
+  <br><br>
+  🚀 <a href="https://dreamsinsight.netlify.app/">Live Demo → dreamsinsight.netlify.app</a>
+</p>
 
-## 📌DreamInsigh 주요 기능
-### 🔑로그인
-- 회원가입 후 로그인을 진행한다.
+---
+
+## 📖 Project Overview
+### 🔍 What Are Your Dreams Telling You?
+**DreamInsight** is a dream interpretation platform that analyzes user-submitted dream journals to provide psychological insights and personalized feedback.
+
+
+## 📌 Key Features of DreamInsight
+
+### 🔑 Login System
+- Users can register and log in securely.
 <p align="center">
   <img src="https://github.com/user-attachments/assets/4a7cf87f-6dcb-4841-9d8f-4fce25428e6e" width="280"/>
   <img src="https://github.com/user-attachments/assets/0fc7b3a8-ede7-4d77-9239-dc8868f8796f" width="330"/>
 </p>
 
-### 꿈 데이터 입력 시스템
-- 꿈 일기를 업로드한다.(파일/텍스트 업로드 가능)
+### 📓 Dream Input System
+- Users can upload dream journals via text or file.
+- All dream entries can be viewed and managed within the platform.
 
-- 꿈 기록 열람 및 관리
+### 🧬 Personalized Psychological Feedback
+- The system automatically analyzes psychological patterns within the dreams and provides tailored feedback.
 
-### 개인화된 심리 분석 및 피드백 제공
-- 심리 상태 자동으로 분석
+### 🧵 Interactive History-based Conversations
+- Users can continue conversations with the AI chatbot based on previous dream analysis results.
 
-### 히스토리 기반 상호작용
-- 분석 결과를 보고 챗 봇과 대화
+## 🪛 Technical Highlights of DreamInsight
 
-## 🪛DreamInsigh 주요 특징 
+- 🔍 **RAG-based Dream Interpretation System**  
+  Retrieves relevant academic papers from Qdrant using user dream data and generates interpretation with LLM.  
+  → Retrieval-Augmented Generation structure
 
-- 🔍 RAG 기반 꿈 해석 시스템 구축
-사용자의 꿈 데이터를 기반으로 Qdrant에서 관련 논문 정보를 검색하고, 이를 LLM에 전달하여 심리학 이론 기반 해석을 생성합니다.
-→ Retrieval-Augmented Generation 구조
+- 📄 **Automated PDF Dream Embedding Pipeline**  
+  Converts uploaded dream PDFs into text, chunks the text, embeds it using Upstage API, and stores it in Qdrant.  
+  → PDF → Text → Chunk → Vector → Qdrant
 
-- 📄 PDF 꿈 일기 자동 임베딩 파이프라인
-사용자가 업로드한 꿈 일기 PDF를 텍스트로 변환한 후, 문단 단위 청크로 나누고 Upstage 임베딩 API로 벡터화하여 Qdrant에 자동 업로드
-→ PDF → 텍스트 → 청크 → 벡터 → Qdrant
+- 💬 **Emotion & Symbol/Intent Analysis via API**  
+  Integrates external APIs to tag emotional tone and extract symbolic elements from dreams.  
+  → Emotion tagging + Symbolic keyword extraction used as reasoning for interpretation
 
-- 💬 감정 분석 및 상징/의도 추출 API 연동
-감정 분석 API를 통해 꿈의 정서적 흐름을 파악하고, 상징 해석 API로 무의식적 메시지와 상징을 분석
-→ 감정 태깅 + 상징 키워드 추출 → 해석 근거로 사용
+- 🤖 **LLM-Based Interpretation Module**  
+  Combines emotion/symbol data and retrieved paper vectors to generate interpretations using psychological theories (CBT, Freud, Jung, etc.)
 
-- 🤖 Solar Pro LLM 기반 해석 생성 모듈
-사용자 감정 + 상징 정보 + 관련 논문 벡터들을 LLM에 전달하여, 심리학 이론(CBT, 프로이트, 융 등)에 기반한 맞춤형 해몽을 자동 생성
+- 💾 **Qdrant-based Vector Storage with Metadata**  
+  All vectors include metadata such as `title`, `source`, and `chunk_id` to support grouping and post-processing.  
+  → Enables emotional analysis, summarization, and comparison
 
-- 💾 Qdrant 기반 벡터 저장소 관리 및 메타데이터 활용
-저장된 논문 및 꿈 일기 벡터는 title, source, chunk_id 등의 메타데이터를 기반으로 그룹화 및 후처리 가능
-→ 감정 분석, 요약, 비교 분석 등에 활용
+- 🗂 **Interpretation History DB & Version Control**  
+  All generated results are stored per user with like/dislike feedback. Conversations can continue and evolve with user questions.
 
-- 🗂 꿈 해석 히스토리 DB 및 응답 버전 관리
-생성된 해석은 사용자별 DB에 저장되며, 각 버전에 대한 피드백(좋아요/싫어요)과 질문 응답을 통해 해석이 지속적으로 개선됨
+- 👍 **User Feedback System**  
+  Users provide simple like/dislike responses through the UI, which are saved to the DB and used to improve future interpretations.
 
-- 👍 사용자 피드백 수집 시스템
-웹 UI 상에서 사용자 클릭으로 긍정/부정 피드백 수집 → DB 연동 → 해석 개선에 활용
-→ "좋아요/싫어요", 추가 질문 기능 연동
-## 🧪 DreamInsigh 솔루션 구조
+## 🧪 DreamInsight System Architecture
 
-1. 사용자 꿈 입력
+1. User dream input  
+2. Data storage and preprocessing (backend)  
+3. Emotion/symbol analysis and vector embedding  
+4. LLM-based interpretation generation  
+5. History-based interaction and response feedback
 
-2. 데이터 저장 및 전처리 (백엔드)
 
-3. 감정/의도 분석 및 벡터 저장
+## ⚙️ Tech Stack
+| Area | Technology |
+|------|------------|
+| Frontend | React |
+| Backend | Flask |
+| Vector Database | QdrantVectorStore |
+| Embedding | Upstage Embedding API |
+| RAG | LangChain |
+| Others | SQLite, Document Parser, Solar Pro LLM |
 
-4. 해석 생성 (LLM 연동)
+## 🚀 Live Demo
+https://dreamsinsight.netlify.app/
 
-5. 응답 저장 및 질의응답 반복
-```
-dreaminsight/
-├── frontend/         # React 기반 사용자 인터페이스
-├── backend/          # Flask 백엔드 서버
-│   └── SQLite        # 사용자 정보 및 꿈 일기 저장
-├── analysis/
-│   ├── emotion/      # 감정 분석 API 연동
-│   └── symbol/       # 상징 및 의도 분석 모듈
-├── embedding/
-│   └── qdrant/       # 벡터 저장 및 논문 연동
-├── llm/
-│   └── interpret/    # Solar Pro LLM 연동하여 해석 생성
-├── feedback/         # 사용자 피드백 저장 및 대화 관리
-```
-## ⚙️ 기술 스택 (Tech Stack)
-|영역|기술|
-|--|--|
-|프론트엔드|React|
-|백엔드|Flask|
-|벡터 데이터베이스|QdrantVectorStore|
-|임베딩|Upstage Embedding API|
-|RAG|LangChain|
-|기타|SQLite, Documnet Parse, Solar Pro LLM)|
 
-## Live Demo
-
-## 💡향후 계획 (Roadmap)
- - GPT와 꿈에 대한 대화형 상담 기능 추가
-
- - 사용자 맞춤형 해석 템플릿 생성
-
- - 피드백 기반 해석 자동 개선 기능
-   
- - 꿈 커뮤니티를 개설
-
-## 📬 문의
-- 📧 이메일: dreaminsight@yourdomain.com
-
-- 🧑‍💻 팀원 또는 기여자 목록은 CONTRIBUTORS.md 참고
+## 📬 Contact
+- Email: Minkyu Kim - leo437782@yonsei.ac.kr
