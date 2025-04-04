@@ -36,6 +36,8 @@ def generate_solar_response(system_prompt, user_prompt):
 
 
 def call_solar_chat(messages):
+        url =  "https://api.upstage.ai/v1/chat/completions" # 실제 API URL
+        token = UPSTAGE_API_KEY
         payload = {
             "model": "solar-pro",
             "messages": messages,
@@ -46,6 +48,6 @@ def call_solar_chat(messages):
             "Authorization": f"Bearer {UPSTAGE_API_KEY}",
             "Content-Type": "application/json"
         }
-        response = requests.post(UPSTAGE_API_KEY, headers=headers, json=payload)
+        response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]

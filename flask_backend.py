@@ -225,9 +225,7 @@ def submit_dream_text(user_id):
         return jsonify({'error': 'Title, date and content are required'}), 400
 
     #  2: 감정 분석을 위한 기본값을 JSON 형식으로 설정
-    # 이전 코드에서는 emotions 필드가 없거나 잘못된 형식이었을 가능성 있음
-    emotions = json.dumps({"emotions": []})
-
+    emotions = json.dumps({"neutral": 1.0})
     # dream_id = generate_dream_id(title, date)
     dream_id = generate_unique_dream_id(user_id, title, date)
 
@@ -507,21 +505,22 @@ def process_chat_message(user_id, dream_id):
             "content": "너는 꿈 해석과 심리 상담에 특화된 AI야. 사용자와 친절하게 대화해줘."
         })
 
-    
+    app.logger.info(f"사용자가 입력한 메시지: {user_message}")
     chat_history[chat_key].append({"role": "user", "content": user_message})
 
-    MAX_HISTORY = 20
     # 마지막 MAX_HISTORY개만 유지
+    MAX_HISTORY = 20
     if len(chat_history[chat_key]) > MAX_HISTORY:
         chat_history[chat_key] = [chat_history[chat_key][0]] + chat_history[chat_key][-MAX_HISTORY:]
 
-        
+
     try:
         ai_reply = call_solar_chat(chat_history[chat_key])
         if not ai_reply:
-            return jsonify({"error": "AI 응답을 받지 못했습니다."}), 500
             app.logger.info("ai 응답 실패...")
+            return jsonify({"error": "AI 응답을 받지 못했습니다."}), 500
         # AI 응답도 대화 이력에 추가
+        app.logger.info(f"사용자가 입력한 메시지: {ai_reply}")
         chat_history[chat_key].append({"role": "assistant", "content": ai_reply})
         return jsonify({"response": ai_reply})
 
