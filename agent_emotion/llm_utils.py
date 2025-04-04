@@ -48,6 +48,6 @@ def call_solar_chat(messages):
             "Authorization": f"Bearer {UPSTAGE_API_KEY}",
             "Content-Type": "application/json"
         }
-        response = requests.post(UPSTAGE_API_KEY, headers=headers, json=payload)
+        response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
