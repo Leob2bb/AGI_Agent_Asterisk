@@ -13,7 +13,7 @@
 
 ## 📖 Project Overview
 ### 🔍 What Are Your Dreams Telling You?
-**DreamInsight** is a dream interpretation platform that analyzes user-submitted dream journals to provide psychological insights and personalized feedback.
+**DreamsInsight** is a dream interpretation platform that analyzes user-submitted dream journals to provide psychological insights and personalized feedback.
 
 
 ## 📌 Key Features of DreamInsight
@@ -72,7 +72,7 @@
 - 👍 **User Feedback System**  
   Users provide simple like/dislike responses through the UI, which are saved to the DB and used to improve future interpretations.
 
-## 🧪 DreamInsight System Architecture
+## 🧪 DreamsInsight System Architecture
 
 1. User dream input  
 2. Data storage and preprocessing (backend)  
