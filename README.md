@@ -16,7 +16,7 @@
 **DreamsInsight** is a dream interpretation platform that analyzes user-submitted dream journals to provide psychological insights and personalized feedback.
 
 
-## 📌 Key Features of DreamInsight
+## 📌 Key Features of DreamsInsight
 
 ### 🔑 Login System
 - Users can register and log in securely.
