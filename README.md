@@ -5,8 +5,7 @@
 </p>
 
 <p align="center">
-  🌙 Discover the hidden messages in your dreams through AI-powered psychological analysis.  
-  <br><br>
+  
   🚀 <a href="https://dreamsinsight.netlify.app/">Live Demo → dreamsinsight.netlify.app</a>
 </p>
 
@@ -29,12 +28,22 @@
 ### 📓 Dream Input System
 - Users can upload dream journals via text or file.
 - All dream entries can be viewed and managed within the platform.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a2ad2474-81ea-4743-9ea4-377a30509979" width="280"/>
+  <img src="https://github.com/user-attachments/assets/4f28c24f-cf5e-4a28-9922-6e7111698bef" width="370"/>
+</p>
 
 ### 🧬 Personalized Psychological Feedback
 - The system automatically analyzes psychological patterns within the dreams and provides tailored feedback.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/c3065782-d64e-4487-86fa-6c204342f8a6" width="350"/>
+</p>
 
 ### 🧵 Interactive History-based Conversations
 - Users can continue conversations with the AI chatbot based on previous dream analysis results.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/63f5e8d2-754d-4130-9286-244cce370af3" width="350"/>
+</p>
 
 ## 🪛 Technical Highlights of DreamInsight
 
