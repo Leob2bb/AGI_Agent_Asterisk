@@ -225,9 +225,7 @@ def submit_dream_text(user_id):
         return jsonify({'error': 'Title, date and content are required'}), 400
 
     #  2: 감정 분석을 위한 기본값을 JSON 형식으로 설정
-    # 이전 코드에서는 emotions 필드가 없거나 잘못된 형식이었을 가능성 있음
-    emotions = json.dumps({"emotions": []})
-
+    emotions = json.dumps({"neutral": 1.0})
     # dream_id = generate_dream_id(title, date)
     dream_id = generate_unique_dream_id(user_id, title, date)
 
