@@ -21,8 +21,8 @@
 ### 🔑 Login System
 - Users can register and log in securely.
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/4a7cf87f-6dcb-4841-9d8f-4fce25428e6e" width="280"/>
-  <img src="https://github.com/user-attachments/assets/0fc7b3a8-ede7-4d77-9239-dc8868f8796f" width="330"/>
+  <img src="https://github.com/user-attachments/assets/5d6e88c5-6906-4f46-9524-c8c4fc68274f" width="280"/>
+  <img src="https://github.com/user-attachments/assets/1bcd3c7c-333f-4d2c-bd0d-59fc376b63a9" width="330"/>
 </p>
 
 ### 📓 Dream Input System
